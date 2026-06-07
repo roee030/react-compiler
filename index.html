@@ -187,6 +187,49 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--pape
 .hook-top { padding:18px 22px 14px; border-bottom:1px solid var(--rule); flex-shrink:0; }
 .hook-pad { padding:16px 20px; overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:10px; }
 .hook-pad::-webkit-scrollbar { width:0; }
+
+/* square video widget */
+.sl-video-sq {
+  width: 400px;
+  height: 300px;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 18px rgba(0,0,0,.13), 0 0 0 1px var(--rule);
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity .6s ease .3s;
+  background: var(--cd);
+}
+.sl.on .sl-video-sq { opacity: 1; }
+.sl-video-sq video {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: fit;
+}
+
+/* hook slides: 2-col code blocks side by side, scrollable */
+.hook-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  flex: 1;
+  min-height: 0;
+}
+.hook-header {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 8px;
+  flex-shrink: 0;
+}
+.hook-notes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 10px;
+  flex-shrink: 0;
+}
 </style>
 </head>
 <body>
@@ -252,16 +295,19 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--pape
   <div class="frame">
     <div class="eyebrow">Introduction</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;flex:1;min-height:0">
-      <div class="col stg" style="display:flex;flex-direction:column;gap:14px;min-height:0;overflow-y:auto">
+      <div class="col stg" style="display:flex;flex-direction:column;gap:12px;min-height:0">
         <div>
           <div class="h2">What is the React <em>Compiler</em>?</div>
-          <p class="lead" style="font-size:14.5px;margin-top:8px">A <strong>build-time plugin</strong> that reads your JSX, analyses data-flow, and emits optimised JavaScript with automatic memoization.</p>
+          <p class="lead" style="font-size:14px;margin-top:8px">A <strong>build-time plugin</strong> that reads your JSX, analyses data-flow, and emits optimised JavaScript with automatic memoization.</p>
         </div>
         <div class="hr"></div>
-        <div class="nc n-o"><span class="nt">Build-time · Babel/SWC plugin</span>Runs during your build, not in the browser. Zero runtime overhead for the analysis itself. Stable v1.0 — October 2025.</div>
-        <div class="nc n-g"><span class="nt">Automatic memoization</span>Replaces <code>useMemo</code>, <code>useCallback</code>, and <code>React.memo</code> — but more precisely. It traces actual data-flow, not your mental model.</div>
-        <div class="nc n-b"><span class="nt">React 17+ compatible</span>Works with React 17, 18, and 19 via <code>react-compiler-runtime</code>. In production at Meta on Instagram and Quest Store.</div>
-        <div class="nc n-k"><span class="nt">~45 internal passes · 7 key stages</span>This deck covers the 7 conceptual stages that explain what gets memoized and why.</div>
+        <div class="nc n-o"><span class="nt">Build-time · Babel/SWC plugin</span>Runs during your build, not in the browser. Zero runtime overhead. Stable v1.0 — October 2025.</div>
+        <div class="nc n-g"><span class="nt">Automatic memoization</span>Replaces <code>useMemo</code>, <code>useCallback</code>, and <code>React.memo</code> — but more precisely. Traces actual data-flow.</div>
+        <div class="nc n-b"><span class="nt">React 17+ compatible</span>In production at Meta on Instagram and Quest Store.</div>
+        <!-- VIDEO SQUARE — bottom of left col -->
+        <div class="sl-video-sq" style="margin-top:auto;align-self:flex-start">
+          <video src="intro_manual_cache_editing.mp4" autoplay muted loop playsinline></video>
+        </div>
       </div>
       <div style="display:flex;flex-direction:column;gap:14px;min-height:0" class="stg">
         <p class="lead" style="font-size:14px">The problem it solves:</p>
@@ -282,14 +328,13 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--pape
 <span class="ln"><span class="cm">// with compiler → write nothing</span></span>
           </div>
         </div>
-        <!-- mini perf chart -->
         <div style="background:var(--paper2);border:1px solid var(--rule);border-radius:8px;padding:14px 16px;flex-shrink:0">
           <div style="font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ink4);margin-bottom:10px">Meta production results</div>
           <div style="display:flex;flex-direction:column;gap:6px">
             <div style="display:flex;align-items:center;gap:10px">
               <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink3);width:140px">Initial load</span>
               <div style="flex:1;background:var(--paper3);border-radius:2px;height:6px;overflow:hidden">
-                <div style="width:12%;height:100%;background:var(--accent);border-radius:2px;animation:barGrow 1s .3s ease both" class="sl.on .bar"></div>
+                <div style="width:12%;height:100%;background:var(--accent);border-radius:2px;animation:barGrow 1s .3s ease both"></div>
               </div>
               <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);width:32px">+12%</span>
             </div>
@@ -311,7 +356,6 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--pape
 .sl.on .bar { animation: barGrow 1s .3s ease both; }
 </style>
 
-<!-- ══ 2 — ALL PASSES ══ -->
 <div class="sl" id="s2">
   <div class="frame">
     <div class="eyebrow">Full pipeline</div>
@@ -463,65 +507,71 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--pape
         </div>
       </div>
       <div style="display:flex;flex-direction:column;gap:12px;justify-content:center" class="stg">
-        <div class="h2" style="font-size:28px">HIR Build</div>
-        <p class="lead" style="font-size:14px">AST → Internal IR with Basic Blocks. Every sub-expression gets a unique name.</p>
+        <div class="h2" style="font-size:26px">HIR Build</div>
+        <p class="lead" style="font-size:13.5px">AST → Internal IR. Every sub-expression gets a unique name.</p>
         <div class="hr"></div>
         <div class="nc n-b"><span class="nt">Why naming matters</span>Without explicit temporaries, the compiler can't trace that <code>stats</code> depends on <code>filteredOrders</code> which depends on <code>$searchQuery</code>.</div>
-        <div class="nc n-o"><span class="nt">What's still missing</span>Variables can be assigned in multiple branches. Which assignment is authoritative? Can't build a dep graph yet — needs SSA.</div>
-        <div class="nc n-k"><span class="nt">Also: DropManualMemoization</span>Your existing <code>useMemo</code> / <code>useCallback</code> are removed in this phase and rebuilt more precisely by the compiler.</div>
+        <div class="nc n-o"><span class="nt">What's still missing</span>Variables assigned in multiple branches — which is authoritative? Needs SSA.</div>
+        <div class="nc n-k"><span class="nt">DropManualMemoization</span>Your <code>useMemo</code>/<code>useCallback</code> are removed and rebuilt more precisely.</div>
+        <!-- VIDEO SQUARE -->
+        <div class="sl-video-sq" style="margin-top:auto;align-self:flex-start">
+          <video src="HIR.mp4" autoplay muted loop playsinline></video>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ══ 5 — SSA ══ -->
 <div class="sl" id="s5">
   <div class="frame">
     <div class="eyebrow">Stage 2 of 7</div>
     <div class="pipe"><div class="ps">HIR</div><div class="pa">›</div><div class="ps on">SSA</div><div class="pa">›</div><div class="ps">Types+Effects</div><div class="pa">›</div><div class="ps">Reactive</div><div class="pa">›</div><div class="ps">Scopes</div><div class="pa">›</div><div class="ps">Output</div></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;flex:1;min-height:0">
-      <div style="display:flex;flex-direction:column;gap:14px">
-        <div class="cb" style="flex:1;min-height:0">
-          <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">Before SSA — ambiguous</span></div>
-          <div class="cbody" style="font-size:11.5px">
+    <div style="display:grid;grid-template-columns:1fr 1fr 0.9fr;gap:16px;flex:1;min-height:0">
+      <div class="cb">
+        <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">Before SSA — ambiguous</span></div>
+        <div class="cbody" style="font-size:11px">
 <span class="ln"><span class="cm">// same name, two possible sources</span></span>
 <span class="ln"><span class="kw">let</span> filteredOrders;</span>
 <span class="ln"><span class="kw">if</span> (cache_miss) {</span>
-<span class="ln HL">  filteredOrders = orders.<span class="fn">filter</span>(...).<span class="fn">sort</span>(...); <span class="cm">// A</span></span>
+<span class="ln HL">  filteredOrders = orders.<span class="fn">filter</span>(...).<span class="fn">sort</span>(...);</span>
+<span class="ln HL">  <span class="cm">// assignment A</span></span>
 <span class="ln">} <span class="kw">else</span> {</span>
-<span class="ln HL">  filteredOrders = $[<span class="num">3</span>]; <span class="cm">// B — from cache</span></span>
+<span class="ln HL">  filteredOrders = $[<span class="num">3</span>]; <span class="cm">// assignment B</span></span>
 <span class="ln">}</span>
-<span class="ln"><span class="fn">use</span>(filteredOrders); <span class="cm">// which one?</span></span>
-          </div>
+<span class="ln"><span class="fn">use</span>(filteredOrders);</span>
+<span class="ln"><span class="cm">// which assignment? compiler can't tell</span></span>
         </div>
-        <div class="cb" style="flex:1;min-height:0">
-          <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">After SSA — from playground</span></div>
-          <div class="cbody" style="font-size:11.5px">
-<span class="ln"><span class="cm">// unique subscript per assignment</span></span>
+      </div>
+      <div class="cb">
+        <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">After SSA — from playground</span></div>
+        <div class="cbody" style="font-size:11px">
+<span class="ln"><span class="cm">// each assignment = unique subscript</span></span>
 <span class="ln"><span class="kw">let</span> filteredOrders;</span>
 <span class="ln"><span class="kw">if</span> (cache_miss) {</span>
 <span class="ln TL">  <span class="ty">filteredOrders$159</span> = orders.<span class="fn">filter</span>(...).<span class="fn">sort</span>(...);</span>
 <span class="ln">} <span class="kw">else</span> {</span>
 <span class="ln TL">  <span class="ty">filteredOrders$223</span> = $[<span class="num">3</span>];</span>
 <span class="ln">}</span>
-<span class="ln"><span class="cm">// Phi node merges at join point:</span></span>
+<span class="ln"><span class="cm">// Phi node at join point:</span></span>
 <span class="ln TL"><span class="ty">filteredOrders$final</span> = φ(<span class="ty">$159</span>, <span class="ty">$223</span>)</span>
-          </div>
+<span class="ln"><span class="cm">// every use → exactly one definition</span></span>
         </div>
       </div>
-      <div style="display:flex;flex-direction:column;gap:12px;justify-content:center" class="stg">
-        <div class="h2" style="font-size:28px">Static Single <em>Assignment</em></div>
-        <p class="lead" style="font-size:14px">Every variable name is assigned exactly once. Branches get unique subscripts. Phi nodes merge at join points.</p>
+      <div style="display:flex;flex-direction:column;gap:10px;justify-content:center" class="stg">
+        <div class="h2" style="font-size:22px">Static Single <em>Assignment</em></div>
         <div class="hr"></div>
-        <div class="nc n-g"><span class="nt">SSA rule</span>Each branch gets its own subscript: <code>$159</code> vs <code>$223</code>. A Phi node (φ) at the merge point makes both sources traceable — every use points to exactly one definition.</div>
-        <div class="nc n-o"><span class="nt">What's still missing</span>We have unambiguous identities. But we don't know the type of each value, or what operations are performed on it. Can it be mutated? Does it escape scope?</div>
-        <div class="nc n-b"><span class="nt">Answer</span>Type inference + effect analysis — the next stage.</div>
+        <div class="nc n-g" style="font-size:12.5px"><span class="nt">SSA rule</span>Each branch: unique subscript. Phi (φ) merges at join point. Every use → one definition.</div>
+        <div class="nc n-o" style="font-size:12.5px"><span class="nt">Still missing</span>Type of each value? What operations on it? Can it be mutated?</div>
+        <div class="nc n-b" style="font-size:12.5px"><span class="nt">Next</span>Type inference + effect analysis.</div>
+        <!-- VIDEO SQUARE -->
+        <div class="sl-video-sq" style="margin-top:auto;align-self:flex-start">
+          <video src="SSA.mp4" autoplay muted loop playsinline></video>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ══ 6 — TYPES + EFFECTS ══ -->
 <div class="sl" id="s6">
   <div class="frame">
     <div class="eyebrow">Stage 3 + 4 of 7</div>
@@ -704,156 +754,185 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--pape
 
 <!-- ══ 10 — WHEN IT WON'T WORK ══ -->
 <div class="sl" id="s10">
-  <div class="frame">
+  <div class="frame" style="padding-bottom:28px">
     <div class="eyebrow">Limitations</div>
-    <div class="h2" style="margin-bottom:6px">When the compiler <em>skips</em></div>
-    <p class="lead" style="font-size:13.5px;margin-bottom:16px;flex-shrink:0">Skips gracefully — original code unchanged, no errors — when it can't guarantee safety.</p>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;flex:1;min-height:0">
-      <div style="display:flex;flex-direction:column;gap:10px">
-        <div class="cb" style="flex:1;min-height:0">
-          <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">❌ Conditional hooks</span></div>
-          <div class="cbody" style="font-size:11px">
+    <div class="h2" style="margin-bottom:4px;font-size:clamp(20px,2.5vw,32px)">When the compiler <em>skips</em></div>
+    <p class="lead" style="font-size:13px;margin-bottom:12px;flex-shrink:0">Skips gracefully — original code unchanged, no errors. Safe fallback always.</p>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;flex:1;min-height:0">
+      <div class="cb">
+        <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">❌ Conditional hooks</span></div>
+        <div class="cbody" style="font-size:10px">
 <span class="ln"><span class="kw">function</span> <span class="fn">MyComponent</span>({ shouldFetch }) {</span>
 <span class="ln HL">  <span class="kw">if</span> (shouldFetch) {</span>
+<span class="ln HL">    <span class="cm">// hook in conditional → skip</span></span>
 <span class="ln HL">    <span class="kw">const</span> data = <span class="fn">useQuery</span>(<span class="str">"/api/data"</span>);</span>
-<span class="ln HL">  } <span class="cm">// hook in conditional → entire fn skipped</span></span>
-<span class="ln">};</span>
-          </div>
+<span class="ln HL">  }</span>
+<span class="ln">}</span>
         </div>
-        <div class="cb" style="flex:1;min-height:0">
-          <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">❌ Hooks in loops</span></div>
-          <div class="cbody" style="font-size:11px">
+      </div>
+      <div class="cb">
+        <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">❌ Hooks in loops</span></div>
+        <div class="cbody" style="font-size:10px">
 <span class="ln"><span class="kw">function</span> <span class="fn">TodoList</span>({ items }) {</span>
 <span class="ln">  <span class="kw">return</span> items.<span class="fn">map</span>(item => {</span>
-<span class="ln HL">    <span class="kw">const</span> [done, setDone] = <span class="fn">useState</span>(<span class="kw">false</span>);</span>
-<span class="ln HL">    <span class="cm">// useState inside .map → skip</span></span>
-<span class="ln">    <span class="kw">return</span> &lt;<span class="fn">TodoItem</span> key={item.id} /&gt;;</span>
+<span class="ln HL">    <span class="cm">// hook in .map → skip</span></span>
+<span class="ln HL">    <span class="kw">const</span> [done] = <span class="fn">useState</span>(<span class="kw">false</span>);</span>
+<span class="ln">    <span class="kw">return</span> &lt;<span class="fn">TodoItem</span> key={item.id}/&gt;;</span>
 <span class="ln">  });</span>
 <span class="ln">}</span>
-          </div>
         </div>
-        <div class="cb" style="flex:1;min-height:0">
-          <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">❌ Class components</span></div>
-          <div class="cbody" style="font-size:11px">
-<span class="ln"><span class="cm">// class components not supported</span></span>
+      </div>
+      <div class="cb">
+        <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">❌ Class components</span></div>
+        <div class="cbody" style="font-size:10px">
+<span class="ln"><span class="cm">// class components — not supported</span></span>
 <span class="ln"><span class="kw">class</span> <span class="ty">MyComponent</span> <span class="kw">extends</span> <span class="ty">React.Component</span> {</span>
 <span class="ln HL">  <span class="fn">render</span>() {</span>
 <span class="ln HL">    <span class="kw">return</span> &lt;<span class="fn">div</span>&gt;{<span class="kw">this</span>.props.data}&lt;/<span class="fn">div</span>&gt;;</span>
 <span class="ln HL">  }</span>
 <span class="ln">}</span>
-          </div>
         </div>
       </div>
-      <div style="display:flex;flex-direction:column;gap:10px">
-        <div class="cb" style="flex:1;min-height:0">
-          <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">❌ Global state mutations</span></div>
-          <div class="cbody" style="font-size:11px">
+      <div class="cb">
+        <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">❌ Global mutations</span></div>
+        <div class="cbody" style="font-size:10px">
 <span class="ln"><span class="kw">let</span> globalCounter = <span class="num">0</span>;</span>
 <span class="ln"><span class="kw">function</span> <span class="fn">Counter</span>() {</span>
-<span class="ln HL">  globalCounter++; <span class="cm">// Mutate on global → unsafe</span></span>
+<span class="ln HL">  globalCounter++; <span class="cm">// Mutate → unsafe</span></span>
 <span class="ln">  <span class="kw">return</span> &lt;<span class="fn">div</span>&gt;{globalCounter}&lt;/<span class="fn">div</span>&gt;;</span>
 <span class="ln">}</span>
-          </div>
         </div>
-        <div class="cb" style="flex:1;min-height:0">
-          <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">❌ Direct DOM manipulation</span></div>
-          <div class="cbody" style="font-size:11px">
+      </div>
+      <div class="cb">
+        <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">❌ Direct DOM manipulation</span></div>
+        <div class="cbody" style="font-size:10px">
 <span class="ln"><span class="kw">function</span> <span class="fn">MyComponent</span>() {</span>
-<span class="ln HL">  document.title = <span class="str">'New Title'</span>; <span class="cm">// side effect in render</span></span>
-<span class="ln">};</span>
-          </div>
+<span class="ln HL">  <span class="cm">// side effect in render → skip</span></span>
+<span class="ln HL">  document.title = <span class="str">'New Title'</span>;</span>
+<span class="ln">}</span>
         </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
         <div class="cb" style="flex:1;min-height:0">
-          <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">✅ Already memoized — compiler rebuilds it better</span></div>
-          <div class="cbody" style="font-size:11px">
-<span class="ln"><span class="cm">// DropManualMemoization removes your useMemo</span></span>
-<span class="ln"><span class="cm">// and rebuilds it more precisely</span></span>
+          <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">✅ Already memoized — rebuilt better</span></div>
+          <div class="cbody" style="font-size:10px">
+<span class="ln"><span class="cm">// DropManualMemoization removes useMemo</span></span>
+<span class="ln"><span class="cm">// then rebuilds more precisely</span></span>
 <span class="ln"><span class="kw">const</span> filtered = <span class="fn">useMemo</span>(</span>
-<span class="ln TL">  () => data.<span class="fn">filter</span>(item => item.category === filter),</span>
-<span class="ln TL">  [data, filter]  <span class="cm">// compiler will recompute this</span></span>
+<span class="ln TL">  () => data.<span class="fn">filter</span>(i => i.cat === filter),</span>
+<span class="ln TL">  [data, filter]</span>
 <span class="ln">);</span>
           </div>
         </div>
-        <div class="nc n-g" style="flex-shrink:0"><span class="nt">Safe fallback + opt out</span>When skipped, original code is emitted unchanged. Use <code>'use no memo'</code> at the top of a function to explicitly opt out.</div>
+        <div class="nc n-g" style="font-size:11.5px;flex-shrink:0"><span class="nt">Opt out</span>Use <code>'use no memo'</code> to skip a component.</div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ══ 11 — REACT 19 INTRO ══ -->
 <div class="sl" id="s11">
-  <div class="frame" style="justify-content:center;max-width:720px">
+  <div class="frame" style="justify-content:center">
     <svg style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none" viewBox="0 0 1440 900" fill="none">
-      <text x="800" y="600" font-family="DM Serif Display" font-size="220" fill="rgba(26,23,20,.025)" font-style="italic" font-weight="400">19</text>
+      <text x="780" y="620" font-family="DM Serif Display" font-size="220" fill="rgba(26,23,20,.025)" font-style="italic">19</text>
     </svg>
-    <div class="stg">
+    <div class="stg" style="max-width:860px;width:100%">
       <div class="eyebrow">React 19</div>
-      <!-- React 19 logo hint -->
-      <svg width="40" height="40" viewBox="0 0 100 100" style="margin-bottom:14px;display:block">
+      <svg width="44" height="44" viewBox="0 0 100 100" style="margin-bottom:14px;display:block">
         <circle cx="50" cy="50" r="10" fill="var(--accent2)"/>
         <ellipse cx="50" cy="50" rx="44" ry="16" stroke="var(--accent2)" stroke-width="3" fill="none"/>
         <ellipse cx="50" cy="50" rx="44" ry="16" stroke="var(--accent2)" stroke-width="3" fill="none" transform="rotate(60 50 50)"/>
         <ellipse cx="50" cy="50" rx="44" ry="16" stroke="var(--accent2)" stroke-width="3" fill="none" transform="rotate(120 50 50)"/>
       </svg>
-      <div class="title-xl" style="font-size:clamp(38px,5vw,62px)">New hooks.<br>New <span class="g">primitives</span>.<br>Better <em>ergonomics</em>.</div>
+      <div class="title-xl" style="font-size:clamp(34px,4.5vw,56px)">New hooks. New <span class="g">primitives</span>.<br>Better <em>ergonomics</em>.</div>
       <div class="hr"></div>
-      <p class="lead" style="font-size:15px">React 19 ships new hooks that solve patterns previously requiring complex workarounds. The compiler works alongside all of them.</p>
-      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:0;margin-top:24px;border:1px solid var(--rule);border-radius:7px;overflow:hidden">
-        <div style="padding:14px;border-right:1px solid var(--rule)"><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent3);font-weight:500;margin-bottom:3px">use()</div><div style="font-size:11px;color:var(--ink4)">Promises + context</div></div>
-        <div style="padding:14px;border-right:1px solid var(--rule)"><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent2);font-weight:500;margin-bottom:3px">useOptimistic</div><div style="font-size:11px;color:var(--ink4)">Instant UI updates</div></div>
-        <div style="padding:14px;border-right:1px solid var(--rule)"><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);font-weight:500;margin-bottom:3px">useActionState</div><div style="font-size:11px;color:var(--ink4)">Form action state</div></div>
-        <div style="padding:14px;border-right:1px solid var(--rule)"><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--gold);font-weight:500;margin-bottom:3px">useFormStatus</div><div style="font-size:11px;color:var(--ink4)">Parent form state</div></div>
-        <div style="padding:14px;border-right:1px solid var(--rule)"><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink3);font-weight:500;margin-bottom:3px">useTransition</div><div style="font-size:11px;color:var(--ink4)">Now async</div></div>
-        <div style="padding:14px"><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink3);font-weight:500;margin-bottom:3px">useDeferredValue</div><div style="font-size:11px;color:var(--ink4)">initialValue param</div></div>
+      <p class="lead" style="font-size:14.5px;margin-bottom:22px">React 19 ships new hooks that solve patterns previously requiring complex workarounds.</p>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+        <div style="background:var(--paper2);border:1px solid var(--rule);border-top:3px solid var(--accent3);border-radius:7px;padding:16px 18px">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:13.5px;color:var(--accent3);font-weight:500;margin-bottom:6px">use()</div>
+          <div style="font-size:13px;color:var(--ink3);line-height:1.5">Unwrap promises + context conditionally</div>
+        </div>
+        <div style="background:var(--paper2);border:1px solid var(--rule);border-top:3px solid var(--accent2);border-radius:7px;padding:16px 18px">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:13.5px;color:var(--accent2);font-weight:500;margin-bottom:6px">useOptimistic()</div>
+          <div style="font-size:13px;color:var(--ink3);line-height:1.5">Instant UI updates, auto-revert</div>
+        </div>
+        <div style="background:var(--paper2);border:1px solid var(--rule);border-top:3px solid var(--accent);border-radius:7px;padding:16px 18px">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:13.5px;color:var(--accent);font-weight:500;margin-bottom:6px">useActionState()</div>
+          <div style="font-size:13px;color:var(--ink3);line-height:1.5">Form action state — loading, error, result</div>
+        </div>
+        <div style="background:var(--paper2);border:1px solid var(--rule);border-top:3px solid var(--gold);border-radius:7px;padding:16px 18px">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:13.5px;color:var(--gold);font-weight:500;margin-bottom:6px">useFormStatus()</div>
+          <div style="font-size:13px;color:var(--ink3);line-height:1.5">Parent form pending state, no prop drilling</div>
+        </div>
+        <div style="background:var(--paper2);border:1px solid var(--rule);border-top:3px solid var(--ink3);border-radius:7px;padding:16px 18px">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:13.5px;color:var(--ink2);font-weight:500;margin-bottom:6px">useTransition()</div>
+          <div style="font-size:13px;color:var(--ink3);line-height:1.5">Now supports async functions natively</div>
+        </div>
+        <div style="background:var(--paper2);border:1px solid var(--rule);border-top:3px solid var(--ink3);border-radius:7px;padding:16px 18px">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:13.5px;color:var(--ink2);font-weight:500;margin-bottom:6px">useDeferredValue()</div>
+          <div style="font-size:13px;color:var(--ink3);line-height:1.5">Now accepts an initialValue parameter</div>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- helper macro for hook slides -->
-<style>
-.hook-sl { display:grid; grid-template-columns:0.9fr 1.1fr; gap:24px; flex:1; min-height:0; }
-</style>
-
-<!-- ══ 12 — use() ══ -->
 <div class="sl" id="s12">
   <div class="frame">
     <div class="eyebrow">React 19 · Hook 1 of 6</div>
-    <div class="hook-sl">
-      <div style="display:flex;flex-direction:column;gap:13px;justify-content:center" class="stg">
-        <div><div class="h2" style="font-size:30px"><span style="font-family:'JetBrains Mono',monospace;font-size:.6em;color:var(--accent3)">use()</span> <span class="bdg bdg-new">new</span></div><p class="lead" style="font-size:14.5px;margin-top:8px">Unwrap <strong>promises</strong> and <strong>context</strong> directly inside render. Unlike all other hooks — it can be called <strong>conditionally</strong>.</p></div>
-        <div class="hr"></div>
-        <div class="nc n-b"><span class="nt">Replaces</span>The <code>useEffect</code> + state boilerplate pattern for reading async data. Write <code>const data = use(promise)</code> and Suspense handles loading.</div>
-        <div class="nc n-g"><span class="nt">Conditional calls</span><code>use(Context)</code> can be called after early returns, inside conditionals, inside loops. <code>useContext()</code> cannot.</div>
-        <div class="nc n-k"><span class="nt">Server → Client</span>Server component creates a promise and passes it as a prop. Client unwraps with <code>use()</code> — data fetching starts immediately, no waterfall.</div>
-        <div class="nc n-o"><span class="nt">With compiler</span>The <code>use()</code> call itself is not memoized. Values derived from the resolved data are automatically wrapped in cache guards.</div>
+    <div class="hook-header">
+      <div class="h2" style="font-size:clamp(20px,2.6vw,32px)"><span style="font-family:'JetBrains Mono',monospace;color:var(--accent3)">use()</span></div>
+      <span class="bdg bdg-new">new</span>
+      <p class="lead" style="font-size:13.5px;margin:0">Unwrap promises + context. Can be called <strong>conditionally</strong> — unlike any other hook.</p>
+    </div>
+    <div class="hook-notes">
+      <div class="nc n-b" style="font-size:12.5px"><span class="nt">Replaces</span><code>useEffect</code> + <code>useState</code> data-loading boilerplate. Suspense handles loading state automatically.</div>
+      <div class="nc n-g" style="font-size:12.5px"><span class="nt">Conditional calls</span>Can be called after early returns, inside conditionals, inside loops — <code>useContext()</code> cannot.</div>
+    </div>
+    <div class="hook-2col">
+      <div class="cb">
+        <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">❌ Before — useEffect + useState boilerplate</span></div>
+        <div class="cbody" style="font-size:11px">
+<span class="ln"><span class="kw">function</span> <span class="fn">OrderList</span>({ userId }) {</span>
+<span class="ln HL">  <span class="kw">const</span> [orders, setOrders] = <span class="fn">useState</span>([]);</span>
+<span class="ln HL">  <span class="kw">const</span> [loading, setLoading] = <span class="fn">useState</span>(<span class="kw">true</span>);</span>
+<span class="ln HL">  <span class="kw">const</span> [error, setError] = <span class="fn">useState</span>(<span class="kw">null</span>);</span>
+<span class="ln"></span>
+<span class="ln HL">  <span class="fn">useEffect</span>(() => {</span>
+<span class="ln HL">    <span class="fn">fetchOrders</span>(userId)</span>
+<span class="ln HL">      .<span class="fn">then</span>(setOrders)</span>
+<span class="ln HL">      .<span class="fn">catch</span>(setError)</span>
+<span class="ln HL">      .<span class="fn">finally</span>(() => <span class="fn">setLoading</span>(<span class="kw">false</span>));</span>
+<span class="ln HL">  }, [userId]);</span>
+<span class="ln"></span>
+<span class="ln">  <span class="kw">if</span> (loading) <span class="kw">return</span> &lt;<span class="fn">Spinner</span>/&gt;;</span>
+<span class="ln">  <span class="kw">if</span> (error)   <span class="kw">return</span> &lt;<span class="fn">Error</span> msg={error}/&gt;;</span>
+<span class="ln">  <span class="kw">return</span> &lt;<span class="fn">ul</span>&gt;{orders.<span class="fn">map</span>(o =&gt; &lt;<span class="fn">li</span>&gt;{o.id}&lt;/<span class="fn">li</span>&gt;)}&lt;/<span class="fn">ul</span>&gt;;</span>
+<span class="ln">}</span>
+        </div>
       </div>
       <div class="cb">
-        <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">use() — promises and context</span></div>
-        <div class="cbody">
+        <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">✅ After — use() + Suspense</span></div>
+        <div class="cbody" style="font-size:11px">
 <span class="ln"><span class="kw">import</span> { use } <span class="kw">from</span> <span class="str">'react'</span>;</span>
 <span class="ln"></span>
-<span class="ln"><span class="cm">// ── 1. Unwrap a promise ──────────────────</span></span>
-<span class="ln"><span class="kw">function</span> <span class="fn">OrderList</span>({ ordersPromise }) {</span>
-<span class="ln HL">  <span class="kw">const</span> orders = <span class="fn">use</span>(ordersPromise);</span>
-<span class="ln">  <span class="kw">return</span> &lt;<span class="fn">ul</span>&gt;{orders.<span class="fn">map</span>(o => &lt;<span class="fn">li</span>&gt;{o.id}&lt;/<span class="fn">li</span>&gt;)}&lt;/<span class="fn">ul</span>&gt;;</span>
-<span class="ln">}</span>
-<span class="ln"><span class="cm">// wrap in Suspense — no useEffect/useState needed</span></span>
-<span class="ln">&lt;<span class="fn">Suspense</span> fallback={&lt;<span class="fn">Spinner</span>/&gt;}&gt;</span>
-<span class="ln">  &lt;<span class="fn">OrderList</span> ordersPromise={<span class="fn">fetchOrders</span>()}/&gt;</span>
-<span class="ln">&lt;/<span class="fn">Suspense</span>&gt;</span>
+<span class="ln TL"><span class="kw">function</span> <span class="fn">OrderList</span>({ ordersPromise }) {</span>
+<span class="ln TL">  <span class="cm">// no useState, no useEffect, no loading state</span></span>
+<span class="ln TL">  <span class="kw">const</span> orders = <span class="fn">use</span>(ordersPromise);</span>
+<span class="ln TL">  <span class="kw">return</span> &lt;<span class="fn">ul</span>&gt;{orders.<span class="fn">map</span>(o =&gt; &lt;<span class="fn">li</span>&gt;{o.id}&lt;/<span class="fn">li</span>&gt;)}&lt;/<span class="fn">ul</span>&gt;;</span>
+<span class="ln TL">}</span>
 <span class="ln"></span>
-<span class="ln"><span class="cm">// ── 2. Context after early return ───────</span></span>
+<span class="ln"><span class="cm">// Suspense = loading  |  ErrorBoundary = error</span></span>
+<span class="ln">&lt;<span class="fn">ErrorBoundary</span>&gt;</span>
+<span class="ln">  &lt;<span class="fn">Suspense</span> fallback={&lt;<span class="fn">Spinner</span>/&gt;}&gt;</span>
+<span class="ln">    &lt;<span class="fn">OrderList</span> ordersPromise={<span class="fn">fetchOrders</span>(userId)}/&gt;</span>
+<span class="ln">  &lt;/<span class="fn">Suspense</span>&gt;</span>
+<span class="ln">&lt;/<span class="fn">ErrorBoundary</span>&gt;</span>
+<span class="ln"></span>
+<span class="ln"><span class="cm">// bonus: works after early return</span></span>
 <span class="ln"><span class="kw">function</span> <span class="fn">ThemeButton</span>({ show }) {</span>
-<span class="ln HL">  <span class="kw">if</span> (!show) <span class="kw">return</span> <span class="kw">null</span>;       <span class="cm">// early return OK</span></span>
-<span class="ln HL">  <span class="kw">const</span> theme = <span class="fn">use</span>(ThemeContext); <span class="cm">// after early return OK</span></span>
+<span class="ln">  <span class="kw">if</span> (!show) <span class="kw">return</span> <span class="kw">null</span>; <span class="cm">// OK</span></span>
+<span class="ln TL">  <span class="kw">const</span> theme = <span class="fn">use</span>(ThemeCtx); <span class="cm">// conditional ✓</span></span>
 <span class="ln">  <span class="kw">return</span> &lt;<span class="fn">button</span> style={theme}&gt;Click&lt;/<span class="fn">button</span>&gt;;</span>
-<span class="ln">} <span class="cm">// useContext() would throw here</span></span>
-<span class="ln"></span>
-<span class="ln"><span class="cm">// ── 3. Server → Client ───────────────────</span></span>
-<span class="ln"><span class="kw">async function</span> <span class="fn">Page</span>() {</span>
-<span class="ln">  <span class="kw">const</span> promise = <span class="fn">fetchOrders</span>(); <span class="cm">// starts immediately</span></span>
-<span class="ln">  <span class="kw">return</span> &lt;<span class="fn">OrderList</span> ordersPromise={promise}/&gt;;</span>
 <span class="ln">}</span>
         </div>
       </div>
@@ -865,48 +944,61 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--pape
 <div class="sl" id="s13">
   <div class="frame">
     <div class="eyebrow">React 19 · Hook 2 of 6</div>
-    <div class="hook-sl">
-      <div style="display:flex;flex-direction:column;gap:13px;justify-content:center" class="stg">
-        <div><div class="h2" style="font-size:30px"><span style="font-family:'JetBrains Mono',monospace;font-size:.6em;color:var(--accent2)">useOptimistic()</span> <span class="bdg bdg-new">new</span></div><p class="lead" style="font-size:14.5px;margin-top:8px">Show an <strong>optimistic UI state immediately</strong> while an async action is in flight. Reverts automatically if the action fails.</p></div>
-        <div class="hr"></div>
-        <div class="nc n-g"><span class="nt">What it replaces</span>Two state variables + manual revert logic on error. One hook now handles the full pattern.</div>
-        <div class="nc n-b"><span class="nt">API</span><code>const [optimistic, addOptimistic] = useOptimistic(state, updateFn)</code><br>The <code>updateFn</code> merges the optimistic update into current state.</div>
-        <div class="nc n-k"><span class="nt">Automatic revert</span>When the parent transition resolves (success or error), optimistic state is replaced by actual server state. You never manage rollback.</div>
-        <div class="nc n-o"><span class="nt">Works with useTransition</span>Wrap your server action in <code>startTransition</code>. Optimistic update shows during the transition. React knows when to sync.</div>
+    <div class="hook-header">
+      <div class="h2" style="font-size:clamp(20px,2.6vw,32px)"><span style="font-family:'JetBrains Mono',monospace;color:var(--accent2)">useOptimistic()</span></div>
+      <span class="bdg bdg-new">new</span>
+      <p class="lead" style="font-size:13.5px;margin:0">Show <strong>instant UI feedback</strong> before server responds. Auto-reverts on failure.</p>
+    </div>
+    <div class="hook-notes">
+      <div class="nc n-g" style="font-size:12.5px"><span class="nt">Replaces</span>Manual pending state + snapshot for revert + try/catch rollback. One hook handles everything.</div>
+      <div class="nc n-k" style="font-size:12.5px"><span class="nt">Automatic revert</span>When the transition resolves (success or error), optimistic state is replaced by server state. No rollback code needed.</div>
+    </div>
+    <div class="hook-2col">
+      <div class="cb">
+        <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">❌ Before — manual optimistic state</span></div>
+        <div class="cbody" style="font-size:11px">
+<span class="ln"><span class="kw">function</span> <span class="fn">OrderList</span>({ orders, onShip }) {</span>
+<span class="ln HL">  <span class="kw">const</span> [localOrders, setLocal] = <span class="fn">useState</span>(orders);</span>
+<span class="ln HL">  <span class="kw">const</span> [pending, setPending] = <span class="fn">useState</span>(<span class="kw">false</span>);</span>
+<span class="ln"></span>
+<span class="ln">  <span class="kw">const</span> <span class="fn">handleShip</span> = <span class="kw">async</span> (id) => {</span>
+<span class="ln HL">    <span class="kw">const</span> prev = localOrders; <span class="cm">// save for revert</span></span>
+<span class="ln HL">    <span class="fn">setLocal</span>(cur => cur.<span class="fn">map</span>(</span>
+<span class="ln HL">      o => o.id===id ? {...o,status:<span class="str">'shipped'</span>} : o</span>
+<span class="ln HL">    ));</span>
+<span class="ln HL">    <span class="fn">setPending</span>(<span class="kw">true</span>);</span>
+<span class="ln">    <span class="kw">try</span> {</span>
+<span class="ln">      <span class="kw">await</span> <span class="fn">onShip</span>(id);</span>
+<span class="ln HL">    } <span class="kw">catch</span> {</span>
+<span class="ln HL">      <span class="fn">setLocal</span>(prev); <span class="cm">// manual revert</span></span>
+<span class="ln HL">    } <span class="kw">finally</span> {</span>
+<span class="ln HL">      <span class="fn">setPending</span>(<span class="kw">false</span>);</span>
+<span class="ln HL">    }</span>
+<span class="ln">  };</span>
+<span class="ln">}</span>
+        </div>
       </div>
       <div class="cb">
-        <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">useOptimistic() — instant feedback, auto-revert</span></div>
-        <div class="cbody">
-<span class="ln"><span class="kw">import</span> { useOptimistic, useTransition } <span class="kw">from</span> <span class="str">'react'</span>;</span>
-<span class="ln"></span>
-<span class="ln"><span class="kw">function</span> <span class="fn">OrderList</span>({ orders, onMarkShipped }) {</span>
+        <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">✅ After — useOptimistic</span></div>
+        <div class="cbody" style="font-size:11px">
+<span class="ln"><span class="kw">function</span> <span class="fn">OrderList</span>({ orders, onShip }) {</span>
 <span class="ln">  <span class="kw">const</span> [isPending, startTransition] = <span class="fn">useTransition</span>();</span>
 <span class="ln"></span>
-<span class="ln HL">  <span class="kw">const</span> [optimisticOrders, addOptimisticOrder] =</span>
-<span class="ln HL">    <span class="fn">useOptimistic</span>(</span>
-<span class="ln HL">      orders,</span>
-<span class="ln HL">      (currentOrders, shippedId) =>          <span class="cm">// update fn</span></span>
-<span class="ln HL">        currentOrders.<span class="fn">map</span>(o =></span>
-<span class="ln HL">          o.id === shippedId ? {...o, status:<span class="str">'shipped'</span>} : o</span>
-<span class="ln HL">        )</span>
-<span class="ln HL">    );</span>
+<span class="ln TL">  <span class="kw">const</span> [optimistic, addOptimistic] =</span>
+<span class="ln TL">    <span class="fn">useOptimistic</span>(</span>
+<span class="ln TL">      orders,</span>
+<span class="ln TL">      (cur, id) => cur.<span class="fn">map</span>(</span>
+<span class="ln TL">        o => o.id===id ? {...o,status:<span class="str">'shipped'</span>} : o</span>
+<span class="ln TL">      )</span>
+<span class="ln TL">    );</span>
 <span class="ln"></span>
-<span class="ln">  <span class="kw">const</span> <span class="fn">handleShip</span> = (orderId) => {</span>
+<span class="ln">  <span class="kw">const</span> <span class="fn">handleShip</span> = (id) => {</span>
 <span class="ln">    <span class="fn">startTransition</span>(<span class="kw">async</span> () => {</span>
-<span class="ln TL">      <span class="fn">addOptimisticOrder</span>(orderId); <span class="cm">// instant UI</span></span>
-<span class="ln">      <span class="kw">await</span> <span class="fn">onMarkShipped</span>(orderId);  <span class="cm">// server call</span></span>
-<span class="ln">      <span class="cm">// success → orders updates from server</span></span>
-<span class="ln">      <span class="cm">// error   → reverts automatically</span></span>
+<span class="ln TL">      <span class="fn">addOptimistic</span>(id); <span class="cm">// instant</span></span>
+<span class="ln">      <span class="kw">await</span> <span class="fn">onShip</span>(id);  <span class="cm">// auto-reverts on throw</span></span>
 <span class="ln">    });</span>
 <span class="ln">  };</span>
-<span class="ln"></span>
-<span class="ln">  <span class="kw">return</span> (</span>
-<span class="ln">    &lt;<span class="fn">ul</span>&gt;{optimisticOrders.<span class="fn">map</span>(o => (</span>
-<span class="ln">      &lt;<span class="fn">li</span> key={o.id}&gt;{o.status} <span class="cm">// shows 'shipped' immediately</span></span>
-<span class="ln">        &lt;<span class="fn">button</span> onClick={() => <span class="fn">handleShip</span>(o.id)}&gt;Ship&lt;/<span class="fn">button</span>&gt;</span>
-<span class="ln">      &lt;/<span class="fn">li</span>&gt;</span>
-<span class="ln">    ))}&lt;/<span class="fn">ul</span>&gt;</span>
-<span class="ln">  );</span>
+<span class="ln">  <span class="cm">// no try/catch, no prev snapshot, no setPending</span></span>
 <span class="ln">}</span>
         </div>
       </div>
@@ -918,46 +1010,65 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--pape
 <div class="sl" id="s14">
   <div class="frame">
     <div class="eyebrow">React 19 · Hook 3 of 6</div>
-    <div class="hook-sl">
-      <div style="display:flex;flex-direction:column;gap:13px;justify-content:center" class="stg">
-        <div><div class="h2" style="font-size:30px"><span style="font-family:'JetBrains Mono',monospace;font-size:.6em;color:var(--accent)">useActionState()</span> <span class="bdg bdg-new">new</span></div><p class="lead" style="font-size:14.5px;margin-top:8px">Manage <strong>loading, error, and result state</strong> from form actions in a single hook.</p></div>
-        <div class="hr"></div>
-        <div class="nc n-o"><span class="nt">What it replaces</span>3 separate state variables for pending / error / result. One hook, one source of truth.</div>
-        <div class="nc n-b"><span class="nt">API</span><code>const [state, action, isPending] = useActionState(fn, initialState)</code><br>Action function receives previous state as first arg — easy to accumulate results.</div>
-        <div class="nc n-g"><span class="nt">Progressive enhancement</span>Pass action to <code>&lt;form action={action}&gt;</code>. Works without JavaScript. React hydrates the result server-side.</div>
-        <div class="nc n-k"><span class="nt">Error handling built in</span>Return an error from your action function. No try/catch at the component level needed.</div>
+    <div class="hook-header">
+      <div class="h2" style="font-size:clamp(20px,2.6vw,32px)"><span style="font-family:'JetBrains Mono',monospace;color:var(--accent)">useActionState()</span></div>
+      <span class="bdg bdg-new">new</span>
+      <p class="lead" style="font-size:13.5px;margin:0">Form action state — <strong>loading, error, result</strong> — in one hook.</p>
+    </div>
+    <div class="hook-notes">
+      <div class="nc n-o" style="font-size:12.5px"><span class="nt">Replaces</span>3 separate state variables: <code>isPending</code>, <code>error</code>, <code>result</code>. One hook, one source of truth.</div>
+      <div class="nc n-g" style="font-size:12.5px"><span class="nt">Progressive enhancement</span>Pass action to <code>&lt;form action={action}&gt;</code>. Works without JavaScript. React hydrates server-side.</div>
+    </div>
+    <div class="hook-2col">
+      <div class="cb">
+        <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">❌ Before — 3 separate state variables</span></div>
+        <div class="cbody" style="font-size:11px">
+<span class="ln"><span class="kw">function</span> <span class="fn">CreateForm</span>({ onSubmit }) {</span>
+<span class="ln HL">  <span class="kw">const</span> [pending, setPending] = <span class="fn">useState</span>(<span class="kw">false</span>);</span>
+<span class="ln HL">  <span class="kw">const</span> [error, setError]     = <span class="fn">useState</span>(<span class="kw">null</span>);</span>
+<span class="ln HL">  <span class="kw">const</span> [result, setResult]   = <span class="fn">useState</span>(<span class="kw">null</span>);</span>
+<span class="ln"></span>
+<span class="ln">  <span class="kw">const</span> <span class="fn">handleSubmit</span> = <span class="kw">async</span> (e) => {</span>
+<span class="ln">    e.<span class="fn">preventDefault</span>();</span>
+<span class="ln HL">    <span class="fn">setPending</span>(<span class="kw">true</span>); <span class="fn">setError</span>(<span class="kw">null</span>);</span>
+<span class="ln">    <span class="kw">try</span> {</span>
+<span class="ln">      <span class="kw">const</span> r = <span class="kw">await</span> <span class="fn">onSubmit</span>(<span class="kw">new</span> <span class="fn">FormData</span>(e.target));</span>
+<span class="ln HL">      <span class="fn">setResult</span>(r);</span>
+<span class="ln">    } <span class="kw">catch</span>(e) {</span>
+<span class="ln HL">      <span class="fn">setError</span>(e.message);</span>
+<span class="ln">    } <span class="kw">finally</span> {</span>
+<span class="ln HL">      <span class="fn">setPending</span>(<span class="kw">false</span>);</span>
+<span class="ln">    }</span>
+<span class="ln">  };</span>
+<span class="ln">}</span>
+        </div>
       </div>
       <div class="cb">
-        <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">useActionState() — form state in one hook</span></div>
-        <div class="cbody">
-<span class="ln"><span class="kw">import</span> { useActionState } <span class="kw">from</span> <span class="str">'react'</span>;</span>
-<span class="ln"></span>
-<span class="ln"><span class="kw">async function</span> <span class="fn">createOrderAction</span>(prevState, formData) {</span>
-<span class="ln">  <span class="kw">const</span> item = formData.<span class="fn">get</span>(<span class="str">'item'</span>);</span>
+        <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">✅ After — useActionState</span></div>
+        <div class="cbody" style="font-size:11px">
+<span class="ln"><span class="kw">async function</span> <span class="fn">createAction</span>(prevState, formData) {</span>
 <span class="ln">  <span class="kw">try</span> {</span>
-<span class="ln">    <span class="kw">const</span> order = <span class="kw">await</span> <span class="fn">createOrder</span>({ item });</span>
+<span class="ln">    <span class="kw">const</span> order = <span class="kw">await</span> <span class="fn">createOrder</span>(formData.<span class="fn">get</span>(<span class="str">'item'</span>));</span>
 <span class="ln">    <span class="kw">return</span> { success: <span class="kw">true</span>, order, error: <span class="kw">null</span> };</span>
 <span class="ln">  } <span class="kw">catch</span> (e) {</span>
 <span class="ln">    <span class="kw">return</span> { success: <span class="kw">false</span>, order: <span class="kw">null</span>, error: e.message };</span>
 <span class="ln">  }</span>
 <span class="ln">}</span>
 <span class="ln"></span>
-<span class="ln"><span class="kw">function</span> <span class="fn">CreateOrderForm</span>() {</span>
-<span class="ln HL">  <span class="kw">const</span> [state, action, isPending] =</span>
-<span class="ln HL">    <span class="fn">useActionState</span>(createOrderAction, {</span>
-<span class="ln HL">      success: <span class="kw">false</span>, order: <span class="kw">null</span>, error: <span class="kw">null</span>,</span>
-<span class="ln HL">    });</span>
+<span class="ln"><span class="kw">function</span> <span class="fn">CreateForm</span>() {</span>
+<span class="ln TL">  <span class="kw">const</span> [state, action, isPending] =</span>
+<span class="ln TL">    <span class="fn">useActionState</span>(createAction,</span>
+<span class="ln TL">      { success:<span class="kw">false</span>, order:<span class="kw">null</span>, error:<span class="kw">null</span> });</span>
 <span class="ln"></span>
-<span class="ln TL">  <span class="kw">return</span> (</span>
+<span class="ln">  <span class="kw">return</span> (</span>
 <span class="ln TL">    &lt;<span class="fn">form</span> action={action}&gt;</span>
-<span class="ln TL">      &lt;<span class="fn">input</span> name=<span class="str">"item"</span> disabled={isPending}/&gt;</span>
-<span class="ln TL">      &lt;<span class="fn">button</span> disabled={isPending}&gt;</span>
-<span class="ln TL">        {isPending ? <span class="str">'Creating...'</span> : <span class="str">'Create Order'</span>}</span>
-<span class="ln TL">      &lt;/<span class="fn">button</span>&gt;</span>
-<span class="ln TL">      {state.error && &lt;<span class="fn">p</span>&gt;{state.error}&lt;/<span class="fn">p</span>&gt;}</span>
-<span class="ln TL">      {state.success && &lt;<span class="fn">p</span>&gt;Order #{state.order.id} created!&lt;/<span class="fn">p</span>&gt;}</span>
-<span class="ln TL">    &lt;/<span class="fn">form</span>&gt;</span>
-<span class="ln TL">  );</span>
+<span class="ln">      &lt;<span class="fn">input</span> name=<span class="str">"item"</span> disabled={isPending}/&gt;</span>
+<span class="ln">      &lt;<span class="fn">button</span> disabled={isPending}&gt;</span>
+<span class="ln">        {isPending ? <span class="str">'Saving...'</span> : <span class="str">'Submit'</span>}</span>
+<span class="ln">      &lt;/<span class="fn">button</span>&gt;</span>
+<span class="ln">      {state.error && &lt;<span class="fn">p</span>&gt;{state.error}&lt;/<span class="fn">p</span>&gt;}</span>
+<span class="ln">    &lt;/<span class="fn">form</span>&gt;</span>
+<span class="ln">  );</span>
 <span class="ln">}</span>
         </div>
       </div>
@@ -969,46 +1080,61 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--pape
 <div class="sl" id="s15">
   <div class="frame">
     <div class="eyebrow">React 19 · Hook 4 of 6</div>
-    <div class="hook-sl">
-      <div style="display:flex;flex-direction:column;gap:13px;justify-content:center" class="stg">
-        <div><div class="h2" style="font-size:30px"><span style="font-family:'JetBrains Mono',monospace;font-size:.6em;color:var(--gold)">useFormStatus()</span> <span class="bdg bdg-new">new</span></div><p class="lead" style="font-size:14.5px;margin-top:8px">Read the <strong>submission state of a parent form</strong> from any child component — no prop drilling.</p></div>
-        <div class="hr"></div>
-        <div class="nc n-k"><span class="nt">What it solves</span>A submit button deep inside a form needs to know if the form is submitting. Previously: pass <code>isPending</code> through every layer. Now: child reads it directly.</div>
-        <div class="nc n-b"><span class="nt">API</span>Import from <code>'react-dom'</code> (not <code>'react'</code>). Must be called inside a component rendered inside a <code>&lt;form&gt;</code>. The form must use the <code>action</code> prop.</div>
-        <div class="nc n-g"><span class="nt">data field</span>Contains the <code>FormData</code> being submitted — useful for showing which values are in-flight or building optimistic UI based on inputs.</div>
-        <div class="nc n-o"><span class="nt">Pattern</span>Extract your submit button into its own component. Use <code>useFormStatus()</code> inside it. Parent form stays clean, button is self-contained.</div>
-      </div>
+    <div class="hook-header">
+      <div class="h2" style="font-size:clamp(20px,2.6vw,32px)"><span style="font-family:'JetBrains Mono',monospace;color:var(--gold)">useFormStatus()</span></div>
+      <span class="bdg bdg-new">new</span>
+      <p class="lead" style="font-size:13.5px;margin:0">Read parent form state from any child — <strong>no prop drilling</strong>.</p>
+    </div>
+    <div class="hook-notes">
+      <div class="nc n-k" style="font-size:12.5px"><span class="nt">Replaces</span>Passing <code>isPending</code> as a prop through every layer to reach a button deep in the tree.</div>
+      <div class="nc n-b" style="font-size:12.5px"><span class="nt">Rules</span>Import from <code>'react-dom'</code>. Component must render <em>inside</em> a <code>&lt;form&gt;</code>. Form must use <code>action</code> prop.</div>
+    </div>
+    <div class="hook-2col">
       <div class="cb">
-        <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">useFormStatus() — no prop drilling</span></div>
-        <div class="cbody">
-<span class="ln"><span class="kw">import</span> { useFormStatus } <span class="kw">from</span> <span class="str">'react-dom'</span>; <span class="cm">// note: react-dom</span></span>
+        <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">❌ Before — prop drilling isPending</span></div>
+        <div class="cbody" style="font-size:11px">
+<span class="ln"><span class="kw">function</span> <span class="fn">CreateForm</span>({ action }) {</span>
+<span class="ln HL">  <span class="kw">const</span> [isPending, setIsPending] = <span class="fn">useState</span>(<span class="kw">false</span>);</span>
 <span class="ln"></span>
-<span class="ln"><span class="cm">// self-contained — reads form state itself</span></span>
-<span class="ln"><span class="kw">function</span> <span class="fn">SubmitButton</span>({ label = <span class="str">'Submit'</span> }) {</span>
-<span class="ln HL">  <span class="kw">const</span> { pending, data } = <span class="fn">useFormStatus</span>();</span>
-<span class="ln">  <span class="kw">const</span> submittingItem = data?.<span class="fn">get</span>(<span class="str">'item'</span>);</span>
+<span class="ln">  <span class="kw">const</span> <span class="fn">handleSubmit</span> = <span class="kw">async</span> (e) => {</span>
+<span class="ln HL">    <span class="fn">setIsPending</span>(<span class="kw">true</span>);</span>
+<span class="ln">    <span class="kw">await</span> <span class="fn">action</span>(<span class="kw">new</span> <span class="fn">FormData</span>(e.target));</span>
+<span class="ln HL">    <span class="fn">setIsPending</span>(<span class="kw">false</span>);</span>
+<span class="ln">  };</span>
 <span class="ln"></span>
 <span class="ln">  <span class="kw">return</span> (</span>
-<span class="ln">    &lt;<span class="fn">button</span> type=<span class="str">"submit"</span> disabled={pending}&gt;</span>
-<span class="ln">      {pending ? <span class="str">`Creating "${submittingItem}"...`</span> : label}</span>
-<span class="ln">    &lt;/<span class="fn">button</span>&gt;</span>
+<span class="ln">    &lt;<span class="fn">form</span> onSubmit={handleSubmit}&gt;</span>
+<span class="ln">      &lt;<span class="fn">input</span> name=<span class="str">"item"</span>/&gt;</span>
+<span class="ln HL">      <span class="cm">// must pass isPending all the way down</span></span>
+<span class="ln HL">      &lt;<span class="fn">SubmitBtn</span> isPending={isPending}/&gt;</span>
+<span class="ln">    &lt;/<span class="fn">form</span>&gt;</span>
 <span class="ln">  );</span>
 <span class="ln">}</span>
+        </div>
+      </div>
+      <div class="cb">
+        <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">✅ After — useFormStatus reads it directly</span></div>
+        <div class="cbody" style="font-size:11px">
+<span class="ln"><span class="kw">import</span> { useFormStatus } <span class="kw">from</span> <span class="str">'react-dom'</span>;</span>
 <span class="ln"></span>
-<span class="ln"><span class="cm">// parent form — clean, no isPending prop passed down</span></span>
-<span class="ln"><span class="kw">function</span> <span class="fn">CreateOrderForm</span>({ action }) {</span>
+<span class="ln TL"><span class="kw">function</span> <span class="fn">SubmitBtn</span>() {</span>
+<span class="ln TL">  <span class="kw">const</span> { pending, data } = <span class="fn">useFormStatus</span>();</span>
+<span class="ln TL">  <span class="kw">const</span> item = data?.<span class="fn">get</span>(<span class="str">'item'</span>);</span>
 <span class="ln TL">  <span class="kw">return</span> (</span>
-<span class="ln TL">    &lt;<span class="fn">form</span> action={action}&gt;</span>
-<span class="ln TL">      &lt;<span class="fn">input</span> name=<span class="str">"item"</span> placeholder=<span class="str">"Order item"</span>/&gt;</span>
-<span class="ln TL">      &lt;<span class="fn">SubmitButton</span> label=<span class="str">"Create Order"</span>/&gt; <span class="cm">// no isPending</span></span>
-<span class="ln TL">    &lt;/<span class="fn">form</span>&gt;</span>
+<span class="ln TL">    &lt;<span class="fn">button</span> disabled={pending}&gt;</span>
+<span class="ln TL">      {pending ? <span class="str">`Saving "${item}"...`</span> : <span class="str">'Submit'</span>}</span>
+<span class="ln TL">    &lt;/<span class="fn">button</span>&gt;</span>
 <span class="ln TL">  );</span>
-<span class="ln">}</span>
+<span class="ln TL">}</span>
 <span class="ln"></span>
-<span class="ln"><span class="cm">// ⚠ rules:</span></span>
-<span class="ln"><span class="cm">// 1. import from 'react-dom', not 'react'</span></span>
-<span class="ln"><span class="cm">// 2. component must render inside a &lt;form&gt;</span></span>
-<span class="ln"><span class="cm">// 3. form must use action prop, not onSubmit</span></span>
+<span class="ln"><span class="kw">function</span> <span class="fn">CreateForm</span>({ action }) {</span>
+<span class="ln">  <span class="kw">return</span> (</span>
+<span class="ln TL">    &lt;<span class="fn">form</span> action={action}&gt;</span>
+<span class="ln">      &lt;<span class="fn">input</span> name=<span class="str">"item"</span>/&gt;</span>
+<span class="ln TL">      &lt;<span class="fn">SubmitBtn</span>/&gt; <span class="cm">// no isPending prop!</span></span>
+<span class="ln TL">    &lt;/<span class="fn">form</span>&gt;</span>
+<span class="ln">  );</span>
+<span class="ln">}</span>
         </div>
       </div>
     </div>
@@ -1019,43 +1145,51 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--pape
 <div class="sl" id="s16">
   <div class="frame">
     <div class="eyebrow">React 19 · Hook 5 of 6</div>
-    <div class="hook-sl">
-      <div style="display:flex;flex-direction:column;gap:13px;justify-content:center" class="stg">
-        <div><div class="h2" style="font-size:30px"><span style="font-family:'JetBrains Mono',monospace;font-size:.6em;color:var(--ink3)">useTransition()</span> <span class="bdg bdg-up">enhanced</span></div><p class="lead" style="font-size:14.5px;margin-top:8px">Now accepts <strong>async functions</strong>. <code>isPending</code> stays true for the entire async operation — including every await.</p></div>
-        <div class="hr"></div>
-        <div class="nc n-g"><span class="nt">What changed in React 19</span>React 18: <code>startTransition</code> only accepted sync functions. React 19: async is fully supported. <code>isPending</code> covers the entire async lifecycle.</div>
-        <div class="nc n-b"><span class="nt">Low-priority rendering</span>Transitions tell React: this is not urgent. If the user types during a transition, React interrupts it and handles the input first.</div>
-        <div class="nc n-o"><span class="nt">Error handling</span>If the async function throws, React catches it and shows the nearest Error Boundary. No try/catch needed inside <code>startTransition</code>.</div>
-        <div class="nc n-k"><span class="nt">With useOptimistic</span>Call <code>addOptimistic()</code> inside <code>startTransition</code>. Optimistic update shows instantly, transition runs the async work, reverts on failure.</div>
+    <div class="hook-header">
+      <div class="h2" style="font-size:clamp(20px,2.6vw,32px)"><span style="font-family:'JetBrains Mono',monospace;color:var(--ink2)">useTransition()</span></div>
+      <span class="bdg bdg-up">enhanced</span>
+      <p class="lead" style="font-size:13.5px;margin:0">Now supports <strong>async functions</strong> — <code>isPending</code> covers the entire async operation.</p>
+    </div>
+    <div class="hook-notes">
+      <div class="nc n-g" style="font-size:12.5px"><span class="nt">What changed</span>React 18: sync only. React 19: <code>async () =&gt; {}</code> fully supported. <code>isPending</code> stays true through every <code>await</code>.</div>
+      <div class="nc n-b" style="font-size:12.5px"><span class="nt">Low priority</span>If user types during a transition, React interrupts it. Transitions are non-urgent updates — UI stays responsive.</div>
+    </div>
+    <div class="hook-2col">
+      <div class="cb">
+        <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">❌ React 18 — sync only, manual loading</span></div>
+        <div class="cbody" style="font-size:11px">
+<span class="ln"><span class="kw">function</span> <span class="fn">Dashboard</span>({ orders }) {</span>
+<span class="ln HL">  <span class="kw">const</span> [isPending, startTransition] = <span class="fn">useTransition</span>();</span>
+<span class="ln HL">  <span class="kw">const</span> [loading, setLoading] = <span class="fn">useState</span>(<span class="kw">false</span>);</span>
+<span class="ln"></span>
+<span class="ln">  <span class="kw">const</span> <span class="fn">handleDelete</span> = (id) => {</span>
+<span class="ln HL">    <span class="fn">startTransition</span>(() => {  <span class="cm">// sync only!</span></span>
+<span class="ln HL">      <span class="fn">setOrders</span>(o => o.<span class="fn">filter</span>(x => x.id!==id));</span>
+<span class="ln HL">    });</span>
+<span class="ln HL">    <span class="cm">// async must live OUTSIDE the transition</span></span>
+<span class="ln HL">    <span class="fn">setLoading</span>(<span class="kw">true</span>);</span>
+<span class="ln HL">    <span class="fn">deleteOrder</span>(id).<span class="fn">finally</span>(() => <span class="fn">setLoading</span>(<span class="kw">false</span>));</span>
+<span class="ln">  };</span>
+<span class="ln">}</span>
+        </div>
       </div>
       <div class="cb">
-        <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">useTransition() — async support in React 19</span></div>
-        <div class="cbody">
-<span class="ln"><span class="kw">import</span> { useTransition, useOptimistic } <span class="kw">from</span> <span class="str">'react'</span>;</span>
-<span class="ln"></span>
+        <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">✅ React 19 — async supported natively</span></div>
+        <div class="cbody" style="font-size:11px">
 <span class="ln"><span class="kw">function</span> <span class="fn">Dashboard</span>({ orders }) {</span>
-<span class="ln">  <span class="kw">const</span> [isPending, startTransition] = <span class="fn">useTransition</span>();</span>
-<span class="ln">  <span class="kw">const</span> [optimistic, addOptimistic] = <span class="fn">useOptimistic</span>(</span>
-<span class="ln">    orders, (cur, id) => cur.<span class="fn">filter</span>(o => o.id !== id)</span>
-<span class="ln">  );</span>
+<span class="ln TL">  <span class="kw">const</span> [isPending, startTransition] = <span class="fn">useTransition</span>();</span>
+<span class="ln TL">  <span class="kw">const</span> [optimistic, addOptimistic] = <span class="fn">useOptimistic</span>(</span>
+<span class="ln TL">    orders, (cur, id) => cur.<span class="fn">filter</span>(o => o.id!==id)</span>
+<span class="ln TL">  );</span>
 <span class="ln"></span>
-<span class="ln">  <span class="kw">const</span> <span class="fn">handleDelete</span> = (orderId) => {</span>
-<span class="ln HL">    <span class="fn">startTransition</span>(<span class="kw">async</span> () => {    <span class="cm">// async — new in React 19</span></span>
-<span class="ln HL">      <span class="fn">addOptimistic</span>(orderId);          <span class="cm">// instant UI</span></span>
-<span class="ln HL">      <span class="kw">await</span> <span class="fn">deleteOrder</span>(orderId);     <span class="cm">// isPending stays true here</span></span>
-<span class="ln HL">      <span class="cm">// React syncs server state when done</span></span>
-<span class="ln HL">    });                                 <span class="cm">// isPending → false here</span></span>
+<span class="ln">  <span class="kw">const</span> <span class="fn">handleDelete</span> = (id) => {</span>
+<span class="ln TL">    <span class="fn">startTransition</span>(<span class="kw">async</span> () => { <span class="cm">// async OK ✓</span></span>
+<span class="ln TL">      <span class="fn">addOptimistic</span>(id);           <span class="cm">// instant UI</span></span>
+<span class="ln TL">      <span class="kw">await</span> <span class="fn">deleteOrder</span>(id);      <span class="cm">// isPending=true</span></span>
+<span class="ln TL">      <span class="cm">// auto-reverts on throw</span></span>
+<span class="ln TL">    }); <span class="cm">// isPending → false here</span></span>
 <span class="ln">  };</span>
-<span class="ln"></span>
-<span class="ln"><span class="cm">  // React 18: startTransition(() => {})  — sync only</span></span>
-<span class="ln"><span class="cm">  // React 19: startTransition(async () => {}) — async OK</span></span>
-<span class="ln"></span>
-<span class="ln TL">  <span class="kw">if</span> (isPending) <span class="kw">return</span> &lt;<span class="fn">p</span>&gt;Updating...&lt;/<span class="fn">p</span>&gt;;</span>
-<span class="ln">  <span class="kw">return</span> &lt;<span class="fn">ul</span>&gt;{optimistic.<span class="fn">map</span>(o => (</span>
-<span class="ln">    &lt;<span class="fn">li</span> key={o.id}&gt;{o.id}</span>
-<span class="ln">      &lt;<span class="fn">button</span> onClick={() => <span class="fn">handleDelete</span>(o.id)}&gt;✕&lt;/<span class="fn">button</span>&gt;</span>
-<span class="ln">    &lt;/<span class="fn">li</span>&gt;</span>
-<span class="ln">  ))}&lt;/<span class="fn">ul</span>&gt;;</span>
+<span class="ln">  <span class="cm">// no separate loading state needed</span></span>
 <span class="ln">}</span>
         </div>
       </div>
@@ -1067,46 +1201,53 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--pape
 <div class="sl" id="s17">
   <div class="frame">
     <div class="eyebrow">React 19 · Hook 6 of 6</div>
-    <div class="hook-sl">
-      <div style="display:flex;flex-direction:column;gap:13px;justify-content:center" class="stg">
-        <div><div class="h2" style="font-size:30px"><span style="font-family:'JetBrains Mono',monospace;font-size:.6em;color:var(--ink3)">useDeferredValue()</span> <span class="bdg bdg-up">enhanced</span></div><p class="lead" style="font-size:14.5px;margin-top:8px">Now accepts an <strong>initialValue</strong> parameter — show a placeholder on first render instead of blocking.</p></div>
-        <div class="hr"></div>
-        <div class="nc n-o"><span class="nt">What changed in React 19</span>React 18: no deferral on first render. React 19: <code>useDeferredValue(value, initialValue)</code> shows <code>initialValue</code> on first render, component suspends, then renders with real value.</div>
-        <div class="nc n-b"><span class="nt">Without initialValue</span>First render: deferred = current value (no deferral). Useful for keeping stale results visible while new results load — but no skeleton on first load.</div>
-        <div class="nc n-g"><span class="nt">With initialValue</span>First render: deferred = <code>initialValue</code>. React suspends → shows Suspense fallback → renders with real deferred value. Perfect for skeleton screens.</div>
-        <div class="nc n-k"><span class="nt">vs useTransition</span><code>useTransition</code>: you control when the update starts. <code>useDeferredValue</code>: React automatically defers expensive subtrees that receive the value as a prop.</div>
+    <div class="hook-header">
+      <div class="h2" style="font-size:clamp(20px,2.6vw,32px)"><span style="font-family:'JetBrains Mono',monospace;color:var(--ink2)">useDeferredValue()</span></div>
+      <span class="bdg bdg-up">enhanced</span>
+      <p class="lead" style="font-size:13.5px;margin:0">Now accepts <strong>initialValue</strong> — show skeleton on first render instead of blocking.</p>
+    </div>
+    <div class="hook-notes">
+      <div class="nc n-o" style="font-size:12.5px"><span class="nt">What changed</span>React 18: no deferral on first render. React 19: <code>initialValue</code> param → component suspends on first render → skeleton shown.</div>
+      <div class="nc n-b" style="font-size:12.5px"><span class="nt">vs useTransition</span><code>useTransition</code>: you control when to start. <code>useDeferredValue</code>: React automatically defers expensive subtrees receiving the value.</div>
+    </div>
+    <div class="hook-2col">
+      <div class="cb">
+        <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">❌ React 18 — no skeleton on first load</span></div>
+        <div class="cbody" style="font-size:11px">
+<span class="ln"><span class="kw">function</span> <span class="fn">SearchPage</span>({ query }) {</span>
+<span class="ln HL">  <span class="kw">const</span> deferred = <span class="fn">useDeferredValue</span>(query);</span>
+<span class="ln HL">  <span class="cm">// first render: deferred === query</span></span>
+<span class="ln HL">  <span class="cm">// → NO deferral on first render</span></span>
+<span class="ln HL">  <span class="cm">// → Suspense fallback never shown initially</span></span>
+<span class="ln HL">  <span class="cm">// → user sees blank/blocking render</span></span>
+<span class="ln"></span>
+<span class="ln">  <span class="kw">return</span> (</span>
+<span class="ln">    &lt;<span class="fn">Suspense</span> fallback={&lt;<span class="fn">Skeleton</span>/&gt;}&gt;</span>
+<span class="ln HL">      <span class="cm">// skeleton only on updates, not first load</span></span>
+<span class="ln">      &lt;<span class="fn">Results</span> query={deferred}/&gt;</span>
+<span class="ln">    &lt;/<span class="fn">Suspense</span>&gt;</span>
+<span class="ln">  );</span>
+<span class="ln">}</span>
+        </div>
       </div>
       <div class="cb">
-        <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">useDeferredValue() — initialValue in React 19</span></div>
-        <div class="cbody">
-<span class="ln"><span class="kw">import</span> { useDeferredValue, Suspense } <span class="kw">from</span> <span class="str">'react'</span>;</span>
-<span class="ln"></span>
-<span class="ln"><span class="cm">// React 18 — no initialValue</span></span>
-<span class="ln"><span class="kw">function</span> <span class="fn">SearchResults18</span>({ query }) {</span>
-<span class="ln">  <span class="kw">const</span> deferred = <span class="fn">useDeferredValue</span>(query);</span>
-<span class="ln">  <span class="cm">// first render: deferred === query (no deferral)</span></span>
-<span class="ln">  <span class="kw">return</span> &lt;<span class="fn">Results</span> query={deferred}/&gt;;</span>
-<span class="ln">}</span>
-<span class="ln"></span>
-<span class="ln"><span class="cm">// React 19 — with initialValue</span></span>
-<span class="ln"><span class="kw">function</span> <span class="fn">SearchResults19</span>({ query }) {</span>
-<span class="ln HL">  <span class="kw">const</span> deferred = <span class="fn">useDeferredValue</span>(query, <span class="str">''</span>);</span>
-<span class="ln">  <span class="cm">// first render: deferred === '' (initialValue)</span></span>
-<span class="ln">  <span class="cm">// React suspends → shows Suspense fallback</span></span>
-<span class="ln">  <span class="cm">// then renders with real deferred value</span></span>
-<span class="ln">  <span class="kw">return</span> &lt;<span class="fn">Results</span> query={deferred}/&gt;;</span>
-<span class="ln">}</span>
-<span class="ln"></span>
-<span class="ln"><span class="cm">// shows skeleton on first load</span></span>
+        <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">✅ React 19 — skeleton on first load too</span></div>
+        <div class="cbody" style="font-size:11px">
 <span class="ln"><span class="kw">function</span> <span class="fn">SearchPage</span>({ query }) {</span>
-<span class="ln TL">  <span class="kw">return</span> (</span>
-<span class="ln TL">    &lt;<span class="fn">Suspense</span> fallback={&lt;<span class="fn">ResultsSkeleton</span>/&gt;}&gt;</span>
-<span class="ln TL">      &lt;<span class="fn">SearchResults19</span> query={query}/&gt;</span>
-<span class="ln TL">    &lt;/<span class="fn">Suspense</span>&gt;</span>
-<span class="ln TL">  );</span>
-<span class="ln">}</span>
+<span class="ln TL">  <span class="kw">const</span> deferred = <span class="fn">useDeferredValue</span>(query, <span class="str">''</span>);</span>
+<span class="ln TL">  <span class="cm">// first render: deferred === '' (initialValue)</span></span>
+<span class="ln TL">  <span class="cm">// → component suspends immediately</span></span>
+<span class="ln TL">  <span class="cm">// → Suspense shows skeleton ✓</span></span>
+<span class="ln TL">  <span class="cm">// → then renders with real deferred value</span></span>
 <span class="ln"></span>
-<span class="ln"><span class="cm">// with compiler: Results is automatically memoized —</span></span>
+<span class="ln">  <span class="kw">return</span> (</span>
+<span class="ln TL">    &lt;<span class="fn">Suspense</span> fallback={&lt;<span class="fn">Skeleton</span>/&gt;}&gt;</span>
+<span class="ln TL">      <span class="cm">// skeleton shown on first load ✓</span></span>
+<span class="ln TL">      &lt;<span class="fn">Results</span> query={deferred}/&gt;</span>
+<span class="ln TL">    &lt;/<span class="fn">Suspense</span>&gt;</span>
+<span class="ln">  );</span>
+<span class="ln">}</span>
+<span class="ln"><span class="cm">// with compiler: Results auto-memoized —</span></span>
 <span class="ln"><span class="cm">// re-renders only when deferred value changes</span></span>
         </div>
       </div>
@@ -1114,32 +1255,33 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--pape
   </div>
 </div>
 
-<!-- ══ 18 — SUMMARY (after hooks) ══ -->
 <div class="sl" id="s18">
-  <div class="frame" style="justify-content:center;max-width:740px">
+  <div class="frame" style="justify-content:center;align-items:center;text-align:center">
     <svg style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none" viewBox="0 0 1440 900" fill="none">
-      <text x="750" y="680" font-family="DM Serif Display" font-size="260" fill="rgba(26,23,20,.025)" font-style="italic">✓</text>
+      <circle cx="720" cy="450" r="380" stroke="rgba(194,65,12,.05)" stroke-width="1"/>
+      <circle cx="720" cy="450" r="280" stroke="rgba(194,65,12,.04)" stroke-width="1"/>
+      <circle cx="720" cy="450" r="160" stroke="rgba(194,65,12,.03)" stroke-width="1"/>
     </svg>
-    <div class="stg">
-      <div class="eyebrow">Summary</div>
-      <div class="title-xl" style="font-size:clamp(38px,4.8vw,60px)">Build-time <span class="g">analysis</span>.<br>Runtime <em>zero overhead</em>.</div>
-      <div class="hr"></div>
-      <p class="lead" style="font-size:15px;margin-bottom:22px">Seven passes · Five independent cache scopes · Twenty-five slots · All before a single byte reaches the browser — and six new React 19 hooks to build with.</p>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
-        <div style="background:var(--paper2);border:1px solid var(--rule);border-top:2px solid var(--accent);border-radius:6px;padding:14px 16px">
-          <div style="font-family:'Syne',sans-serif;font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:6px">Compiler — 7 stages</div>
-          <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink3);line-height:1.8">HIR → SSA → Types → Effects<br>→ Reactive → Scopes → Output</div>
-        </div>
-        <div style="background:var(--paper2);border:1px solid var(--rule);border-top:2px solid var(--accent2);border-radius:6px;padding:14px 16px">
-          <div style="font-family:'Syne',sans-serif;font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent2);margin-bottom:6px">React 19 — 6 hooks</div>
-          <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink3);line-height:1.8">use · useOptimistic · useActionState<br>useFormStatus · useTransition · useDeferredValue</div>
-        </div>
+    <div class="stg" style="max-width:700px">
+      <svg width="56" height="56" viewBox="0 0 100 100" style="margin:0 auto 24px;display:block">
+        <circle cx="50" cy="50" r="11" fill="var(--accent)"/>
+        <ellipse cx="50" cy="50" rx="46" ry="18" stroke="var(--accent)" stroke-width="2.5" fill="none"/>
+        <ellipse cx="50" cy="50" rx="46" ry="18" stroke="var(--accent)" stroke-width="2.5" fill="none" transform="rotate(60 50 50)"/>
+        <ellipse cx="50" cy="50" rx="46" ry="18" stroke="var(--accent)" stroke-width="2.5" fill="none" transform="rotate(120 50 50)"/>
+      </svg>
+      <div class="title-xl" style="font-size:clamp(72px,10vw,120px);line-height:1;text-align:center;margin-bottom:28px">Thank <em>You</em></div>
+      <div class="hr" style="margin:0 auto 24px"></div>
+      <p class="lead" style="font-size:16px;text-align:center;margin:0 auto;color:var(--ink4)">React Compiler v1.0 · React 19 · Build-time analysis · Zero runtime overhead</p>
+      <div style="display:flex;align-items:center;justify-content:center;gap:28px;margin-top:28px;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--ink4)">
+        <span>compiler.reactjs.org</span>
+        <span style="color:var(--rule)">·</span>
+        <span>react.dev/blog</span>
+        <span style="color:var(--rule)">·</span>
+        <span>react.dev/reference</span>
       </div>
-      <div class="nc n-g"><span class="nt">For our Dashboard</span>Typing in search re-runs only scope @5. Changing <code>userId</code> re-runs only scope @10. JSX element objects are reused by reference — React bails out without reconciliation. All computed automatically — no <code>useMemo</code>, no <code>useCallback</code>, no deps arrays.</div>
     </div>
   </div>
 </div>
-
 </div><!-- #deck -->
 
 <script>
@@ -1176,6 +1318,23 @@ document.getElementById('deck').addEventListener('click',e=>{
   if(x>.65)go(c+1,false);else if(x<.35)go(c-1,true);
 });
 upd();
+
+// Autoplay floating videos when slide becomes active
+const _vidObs = new MutationObserver(() => {
+  document.querySelectorAll('.sl-video-sq video, .sl-video-inline video').forEach(v => {
+    const sl = v.closest('.sl');
+    if (sl && sl.classList.contains('on')) {
+      v.play().catch(()=>{});
+    } else {
+      v.pause();
+      v.currentTime = 0;
+    }
+  });
+});
+document.querySelectorAll('.sl').forEach(s =>
+  _vidObs.observe(s, {attributes:true, attributeFilter:['class']})
+);
+
 </script>
 </body>
 </html>
