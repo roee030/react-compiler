@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>React Compiler — Under the Hood</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;1,300&family=DM+Sans:wght@300;400;500&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --paper: #FAF7F2;
+  --paper2: #F2EDE4;
+  --paper3: #E8E0D2;
+  --ink: #1A1714;
+  --ink2: #3D3830;
+  --ink3: #756D62;
+  --ink4: #A89D8F;
+  --rule: #D4C9B8;
+
+  --accent: #C2410C;   /* deep orange */
+  --accent2: #2D6A4F;  /* forest */
+  --accent3: #1D4E89;  /* navy */
+  --accent4: #7B2D8B;  /* plum */
+  --gold: #B45309;
+
+  /* code */
+  --cd: #1A1714;
+  --cd2: #231F1B;
+  --cd3: #2E2923;
+  --cd-text: #C8C0B4;
+  --cd-kw: #E07A5F;
+  --cd-fn: #81B29A;
+  --cd-str: #C9A96E;
+  --cd-cm: #5C5248;
+  --cd-ty: #7B9DC4;
+  --cd-num: #A4BE7B;
+}
+
+html, body { width: 100%; height: 100%; overflow: hidden; background: var(--paper); font-family: 'DM Sans', sans-serif; color: var(--ink); }
+
+/* ─── DECK ─── */
+#deck { position: relative; width: 100vw; height: 100vh; overflow: hidden; }
+.sl { position: absolute; inset: 0; opacity: 0; pointer-events: none; }
+.sl.on { opacity: 1; pointer-events: all; }
+.sl.enter { animation: slideEnter .5s cubic-bezier(.16,1,.3,1) forwards; }
+.sl.leave { animation: slideLeave .32s cubic-bezier(.4,0,1,1) forwards; }
+.sl.enterBack { animation: slideEnterBack .5s cubic-bezier(.16,1,.3,1) forwards; }
+.sl.leaveBack { animation: slideLeaveBack .32s cubic-bezier(.4,0,1,1) forwards; }
+
+@keyframes slideEnter     { from { opacity:0; transform:translateX(42px) } to { opacity:1; transform:none } }
+@keyframes slideLeave     { from { opacity:1; transform:none } to { opacity:0; transform:translateX(-32px) } }
+@keyframes slideEnterBack { from { opacity:0; transform:translateX(-42px) } to { opacity:1; transform:none } }
+@keyframes slideLeaveBack { from { opacity:1; transform:none } to { opacity:0; transform:translateX(32px) } }
+
+/* ─── PROGRESS ─── */
+#prog { position:fixed; top:0; left:0; height:2px; background:var(--accent); transition:width .4s ease; z-index:99; }
+#ctr  { position:fixed; bottom:20px; right:24px; font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--ink4); z-index:99; }
+#nav  { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--rule); z-index:99; transition:opacity 2s; }
+#nav.hide { opacity:0; }
+
+/* ─── LAYOUT BASE ─── */
+.frame { padding: 52px 64px 40px; height: 100%; display: flex; flex-direction: column; }
+.frame2 { padding: 52px 64px 40px; height: 100%; display: grid; }
+
+/* ─── TYPOGRAPHY ─── */
+.eyebrow {
+  font-family: 'Syne', sans-serif;
+  font-size: 11px; font-weight: 600;
+  letter-spacing: .2em; text-transform: uppercase;
+  color: var(--ink4); margin-bottom: 18px;
+}
+.title-xl {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(48px, 6vw, 80px);
+  line-height: 1.0; font-weight: 400;
+  color: var(--ink); letter-spacing: -.02em;
+  margin-bottom: 20px;
+}
+.title-xl em { font-style: italic; color: var(--accent); }
+.title-xl .g { color: var(--accent2); }
+.title-xl .b { color: var(--accent3); }
+.h2 {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(28px, 3.5vw, 44px);
+  font-weight: 400; color: var(--ink);
+  letter-spacing: -.015em; margin-bottom: 10px;
+  line-height: 1.12;
+}
+.h2 em { font-style: italic; }
+.lead { font-size: 15.5px; line-height: 1.78; color: var(--ink3); max-width: 580px; }
+.lead strong { color: var(--ink); font-weight: 500; }
+.lead code { font-family:'JetBrains Mono',monospace; font-size:13px; color:var(--accent); background:rgba(194,65,12,.07); padding:1px 5px; border-radius:2px; }
+.mono { font-family: 'JetBrains Mono', monospace; }
+
+/* ─── HORIZONTAL RULE ─── */
+.hr { width: 48px; height: 1.5px; background: var(--accent); margin: 18px 0; }
+
+/* ─── CODE BLOCK ─── */
+.cb { background: var(--cd); border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; min-height: 0; border: 1px solid rgba(255,255,255,.04); }
+.cbar { display:flex; align-items:center; gap:6px; padding:10px 14px; background:var(--cd2); border-bottom:1px solid var(--cd3); flex-shrink:0; }
+.dot { width:10px; height:10px; border-radius:50%; }
+.dr{background:#FF5F57}.dy{background:#FFBD2E}.dg{background:#28C840}
+.cname { font-family:'JetBrains Mono',monospace; font-size:9.5px; color:var(--cd-cm); margin-left:5px; }
+.cbody {
+  padding: 16px 16px 16px 52px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px; line-height: 1.75;
+  white-space: pre; overflow-y: auto; overflow-x: hidden;
+  counter-reset: line; flex: 1; min-height: 0;
+  color: var(--cd-text);
+  scrollbar-width: thin; scrollbar-color: var(--cd3) transparent;
+}
+.cbody::-webkit-scrollbar { width: 3px; }
+.cbody::-webkit-scrollbar-thumb { background: var(--cd3); }
+.ln { display: block; position: relative; }
+.ln::before { counter-increment:line; content:counter(line); position:absolute; left:-40px; width:30px; text-align:right; color:var(--cd-cm); font-size:10px; top:.15em; user-select:none; }
+
+/* highlight — no gap between consecutive lines */
+.ln.HL { background: rgba(224,122,95,.12); }
+.ln.HL::after { content:''; position:absolute; left:-52px; top:0; bottom:0; width:3px; background:var(--cd-kw); }
+.ln.TL { background: rgba(129,178,154,.1); }
+.ln.TL::after { content:''; position:absolute; left:-52px; top:0; bottom:0; width:3px; background:var(--cd-fn); }
+.ln.GL { background: rgba(201,169,110,.09); }
+.ln.GL::after { content:''; position:absolute; left:-52px; top:0; bottom:0; width:3px; background:var(--cd-str); }
+.ln.LL { background: rgba(123,157,196,.09); }
+.ln.LL::after { content:''; position:absolute; left:-52px; top:0; bottom:0; width:3px; background:var(--cd-ty); }
+.ln.SL { background: rgba(164,190,123,.09); }
+.ln.SL::after { content:''; position:absolute; left:-52px; top:0; bottom:0; width:3px; background:var(--cd-num); }
+.ln.DIM { opacity: .18; }
+
+/* syntax */
+.kw{color:var(--cd-kw)}.fn{color:var(--cd-fn)}.str{color:var(--cd-str)}.cm{color:var(--cd-cm);font-style:italic}.num{color:var(--cd-num)}.ty{color:var(--cd-ty)}.op{color:var(--cd-text)}
+
+/* ─── NOTE CARDS ─── */
+.nc { border-radius: 6px; padding: 13px 16px; font-size: 13.5px; line-height: 1.65; flex-shrink: 0; }
+.nc .nt { font-family:'Syne',sans-serif; font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; display:block; margin-bottom:5px; }
+.n-o { background:rgba(194,65,12,.07); border-left:3px solid var(--accent); color:var(--ink2); }
+.n-o .nt { color:var(--accent); }
+.n-g { background:rgba(45,106,79,.07); border-left:3px solid var(--accent2); color:var(--ink2); }
+.n-g .nt { color:var(--accent2); }
+.n-b { background:rgba(29,78,137,.07); border-left:3px solid var(--accent3); color:var(--ink2); }
+.n-b .nt { color:var(--accent3); }
+.n-p { background:rgba(123,45,139,.07); border-left:3px solid var(--accent4); color:var(--ink2); }
+.n-p .nt { color:var(--accent4); }
+.n-k { background:rgba(180,83,9,.07); border-left:3px solid var(--gold); color:var(--ink2); }
+.n-k .nt { color:var(--gold); }
+
+/* ─── PIPE BAR ─── */
+.pipe { display:flex; align-items:center; flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; margin-bottom:18px; gap:0; flex-shrink:0; }
+.pipe::-webkit-scrollbar { display:none; }
+.ps { flex-shrink:0; padding:5px 12px; border-radius:4px; border:1px solid var(--rule); font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--ink4); background:var(--paper2); white-space:nowrap; }
+.ps.on { border-color:var(--accent); color:var(--accent); background:rgba(194,65,12,.06); }
+.pa { flex-shrink:0; color:var(--rule); font-size:11px; padding:0 4px; }
+
+/* ─── STAGGER ─── */
+.stg > * { opacity:0; transform:translateY(12px); transition:opacity .4s ease, transform .4s ease; }
+.sl.on .stg > *:nth-child(1) { opacity:1; transform:none; transition-delay:.06s; }
+.sl.on .stg > *:nth-child(2) { opacity:1; transform:none; transition-delay:.13s; }
+.sl.on .stg > *:nth-child(3) { opacity:1; transform:none; transition-delay:.20s; }
+.sl.on .stg > *:nth-child(4) { opacity:1; transform:none; transition-delay:.27s; }
+.sl.on .stg > *:nth-child(5) { opacity:1; transform:none; transition-delay:.34s; }
+.sl.on .stg > *:nth-child(6) { opacity:1; transform:none; transition-delay:.41s; }
+.sl.on .stg > *:nth-child(7) { opacity:1; transform:none; transition-delay:.48s; }
+
+/* ─── SCOPE CARD ─── */
+.scc { border:1px solid var(--rule); border-radius:7px; padding:12px 14px; background:var(--paper2); }
+.scc .sl-h { font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--ink4); letter-spacing:.1em; text-transform:uppercase; margin-bottom:4px; }
+.scc .sl-n { font-family:'DM Serif Display',serif; font-size:15px; font-weight:400; margin-bottom:4px; }
+.scc .sl-d { font-family:'JetBrains Mono',monospace; font-size:10px; margin-bottom:2px; }
+.scc .sl-s { font-family:'JetBrains Mono',monospace; font-size:9.5px; color:var(--ink4); }
+
+/* ─── ALL PASSES ─── */
+.passes { column-count:3; column-gap:18px; font-family:'JetBrains Mono',monospace; font-size:9.5px; line-height:2; flex:1; }
+.pg { font-family:'Syne',sans-serif; font-size:9px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--ink4); margin-top:8px; margin-bottom:2px; break-inside:avoid; }
+.pp { color:var(--rule); padding-left:8px; }
+.pp.cov { color:var(--accent); font-weight:500; }
+
+/* ─── BADGE ─── */
+.bdg { display:inline-block; font-family:'JetBrains Mono',monospace; font-size:8.5px; padding:2px 8px; border-radius:3px; letter-spacing:.06em; text-transform:uppercase; margin-left:8px; vertical-align:middle; }
+.bdg-new { background:rgba(45,106,79,.1); color:var(--accent2); border:1px solid rgba(45,106,79,.25); }
+.bdg-up  { background:rgba(29,78,137,.1); color:var(--accent3); border:1px solid rgba(29,78,137,.25); }
+
+/* ─── HOOK BIG ─── */
+.hook-wrap { border:1px solid var(--rule); border-radius:10px; overflow:hidden; background:var(--paper2); height:100%; display:flex; flex-direction:column; }
+.hook-top { padding:18px 22px 14px; border-bottom:1px solid var(--rule); flex-shrink:0; }
+.hook-pad { padding:16px 20px; overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:10px; }
+.hook-pad::-webkit-scrollbar { width:0; }
+</style>
+</head>
+<body>
+<div id="prog" style="width:0%"></div>
+<div id="ctr">1 / 19</div>
+<div id="nav">← →  ·  space</div>
+<div id="deck">
+
+<!-- ══════════════════════════════════════
+     0 — TITLE
+══════════════════════════════════════ -->
+<div class="sl on" id="s0">
+  <!-- background geometric -->
+  <svg style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none" viewBox="0 0 1440 900" fill="none">
+    <circle cx="1200" cy="150" r="320" stroke="rgba(194,65,12,.06)" stroke-width="1"/>
+    <circle cx="1200" cy="150" r="200" stroke="rgba(194,65,12,.04)" stroke-width="1"/>
+    <circle cx="1200" cy="150" r="80"  fill="rgba(194,65,12,.04)"/>
+    <line x1="0" y1="880" x2="1440" y2="880" stroke="rgba(212,201,184,.6)" stroke-width="1"/>
+    <text x="1140" y="540" font-family="DM Serif Display" font-size="180" fill="rgba(26,23,20,.025)" font-style="italic">RC</text>
+  </svg>
+
+  <div class="frame" style="justify-content:center; max-width:720px;">
+    <div class="stg">
+      <div class="eyebrow">React Compiler · 2025</div>
+
+      <!-- React logo SVG inline -->
+      <svg width="48" height="48" viewBox="0 0 100 100" style="margin-bottom:16px;display:block">
+        <circle cx="50" cy="50" r="11" fill="var(--accent)"/>
+        <ellipse cx="50" cy="50" rx="46" ry="18" stroke="var(--accent)" stroke-width="3" fill="none"/>
+        <ellipse cx="50" cy="50" rx="46" ry="18" stroke="var(--accent)" stroke-width="3" fill="none" transform="rotate(60 50 50)"/>
+        <ellipse cx="50" cy="50" rx="46" ry="18" stroke="var(--accent)" stroke-width="3" fill="none" transform="rotate(120 50 50)"/>
+      </svg>
+
+      <div class="title-xl">How the compiler<br>turns your code<br>into <em>perfect</em> output</div>
+      <div class="hr"></div>
+      <p class="lead" style="font-size:16px">Seven key stages · One real component · From raw JSX to <strong>25 cache slots</strong> — all computed before a byte reaches the browser.</p>
+
+      <!-- Stage flow — minimal text, no boxes -->
+      <div style="margin-top:28px; display:flex; align-items:center; gap:0; flex-wrap:nowrap; overflow:hidden;">
+        <span style="font-family:'Syne',sans-serif;font-size:10px;font-weight:600;color:var(--ink4);letter-spacing:.12em;text-transform:uppercase;margin-right:16px">stages</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink3)">HIR</span>
+        <span style="color:var(--rule);margin:0 8px">→</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink3)">SSA</span>
+        <span style="color:var(--rule);margin:0 8px">→</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink3)">Types</span>
+        <span style="color:var(--rule);margin:0 8px">→</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink3)">Effects</span>
+        <span style="color:var(--rule);margin:0 8px">→</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink3)">Reactive</span>
+        <span style="color:var(--rule);margin:0 8px">→</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink3)">Scopes</span>
+        <span style="color:var(--rule);margin:0 8px">→</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);font-weight:500">Output</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     1 — WHAT IS IT
+══════════════════════════════════════ -->
+<div class="sl" id="s1">
+  <div class="frame">
+    <div class="eyebrow">Introduction</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;flex:1;min-height:0">
+      <div class="col stg" style="display:flex;flex-direction:column;gap:14px;min-height:0;overflow-y:auto">
+        <div>
+          <div class="h2">What is the React <em>Compiler</em>?</div>
+          <p class="lead" style="font-size:14.5px;margin-top:8px">A <strong>build-time plugin</strong> that reads your JSX, analyses data-flow, and emits optimised JavaScript with automatic memoization.</p>
+        </div>
+        <div class="hr"></div>
+        <div class="nc n-o"><span class="nt">Build-time · Babel/SWC plugin</span>Runs during your build, not in the browser. Zero runtime overhead for the analysis itself. Stable v1.0 — October 2025.</div>
+        <div class="nc n-g"><span class="nt">Automatic memoization</span>Replaces <code>useMemo</code>, <code>useCallback</code>, and <code>React.memo</code> — but more precisely. It traces actual data-flow, not your mental model.</div>
+        <div class="nc n-b"><span class="nt">React 17+ compatible</span>Works with React 17, 18, and 19 via <code>react-compiler-runtime</code>. In production at Meta on Instagram and Quest Store.</div>
+        <div class="nc n-k"><span class="nt">~45 internal passes · 7 key stages</span>This deck covers the 7 conceptual stages that explain what gets memoized and why.</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px;min-height:0" class="stg">
+        <p class="lead" style="font-size:14px">The problem it solves:</p>
+        <div class="cb" style="flex:1;min-height:0">
+          <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">before.tsx — manual, error-prone</span></div>
+          <div class="cbody">
+<span class="ln"><span class="cm">// you maintain deps arrays by hand</span></span>
+<span class="ln"><span class="kw">const</span> filtered = <span class="fn">useMemo</span>(() => {</span>
+<span class="ln">  <span class="kw">return</span> orders.<span class="fn">filter</span>(...).<span class="fn">sort</span>(...);</span>
+<span class="ln">}, [orders, searchQuery, statusFilter]);</span>
+<span class="ln"></span>
+<span class="ln"><span class="kw">const</span> handleSelect = <span class="fn">useCallback</span>((id) => {</span>
+<span class="ln">  <span class="fn">logEvent</span>(...); <span class="fn">onOrderSelect</span>(id);</span>
+<span class="ln">}, [userId, onOrderSelect]);</span>
+<span class="ln"></span>
+<span class="ln"><span class="cm">// miss one dep  → stale data bug</span></span>
+<span class="ln"><span class="cm">// extra dep     → wasted re-render</span></span>
+<span class="ln"><span class="cm">// with compiler → write nothing</span></span>
+          </div>
+        </div>
+        <!-- mini perf chart -->
+        <div style="background:var(--paper2);border:1px solid var(--rule);border-radius:8px;padding:14px 16px;flex-shrink:0">
+          <div style="font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ink4);margin-bottom:10px">Meta production results</div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div style="display:flex;align-items:center;gap:10px">
+              <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink3);width:140px">Initial load</span>
+              <div style="flex:1;background:var(--paper3);border-radius:2px;height:6px;overflow:hidden">
+                <div style="width:12%;height:100%;background:var(--accent);border-radius:2px;animation:barGrow 1s .3s ease both" class="sl.on .bar"></div>
+              </div>
+              <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);width:32px">+12%</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink3);width:140px">Interactions (peak)</span>
+              <div style="flex:1;background:var(--paper3);border-radius:2px;height:6px;overflow:hidden">
+                <div style="width:60%;height:100%;background:var(--accent2);border-radius:2px;animation:barGrow 1s .5s ease both"></div>
+              </div>
+              <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent2);width:32px">2.5×</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<style>
+@keyframes barGrow { from { width:0; } }
+.sl.on .bar { animation: barGrow 1s .3s ease both; }
+</style>
+
+<!-- ══ 2 — ALL PASSES ══ -->
+<div class="sl" id="s2">
+  <div class="frame">
+    <div class="eyebrow">Full pipeline</div>
+    <div class="h2" style="margin-bottom:4px">All ~45 passes — <em>7 stages</em> covered here</div>
+    <p class="lead" style="font-size:13px;margin-bottom:14px">The compiler runs dozens of internal passes. This deck covers the 7 conceptual stages that explain what gets memoized and why. <strong style="color:var(--accent)">Orange = covered.</strong></p>
+    <div class="passes">
+      <div class="pg">Build IR</div>
+      <div class="pp">EnvironmentConfig</div>
+      <div class="pp cov">HIR</div>
+      <div class="pp">PruneMaybeThrows</div>
+      <div class="pp">DropManualMemoization</div>
+      <div class="pp">InlineImmediatelyInvokedFnExpressions</div>
+      <div class="pp">MergeConsecutiveBlocks</div>
+      <div class="pp cov">SSA</div>
+      <div class="pp">EliminateRedundantPhi</div>
+      <div class="pp">ConstantPropagation</div>
+      <div class="pg">Types + Effects</div>
+      <div class="pp cov">InferTypes</div>
+      <div class="pp">OptimizePropsMethodCalls</div>
+      <div class="pp">AnalyseFunction (inner)</div>
+      <div class="pp">AnalyseFunctions</div>
+      <div class="pp cov">InferMutationAliasingEffects</div>
+      <div class="pp">DeadCodeElimination</div>
+      <div class="pp">InferMutationAliasingRanges</div>
+      <div class="pg">Reactive</div>
+      <div class="pp cov">InferReactivePlaces</div>
+      <div class="pp">RewriteInstructionKindsBasedOnReassignment</div>
+      <div class="pp cov">InferReactiveScopeVariables</div>
+      <div class="pp">MemoizeFbtAndMacroOperandsInSameScope</div>
+      <div class="pp">OutlineFunctions</div>
+      <div class="pp">AlignMethodCallScopes</div>
+      <div class="pp">AlignObjectMethodScopes</div>
+      <div class="pp">PruneUnusedLabelsHIR</div>
+      <div class="pp">AlignReactiveScopesToBlockScopesHIR</div>
+      <div class="pp">MergeOverlappingReactiveScopesHIR</div>
+      <div class="pp">BuildReactiveScopeTerminalsHIR</div>
+      <div class="pp">FlattenReactiveLoopsHIR</div>
+      <div class="pp">FlattenScopesWithHooksOrUseHIR</div>
+      <div class="pp cov">PropagateScopeDependenciesHIR</div>
+      <div class="pp">BuildReactiveFunction</div>
+      <div class="pp">PruneUnusedLabels</div>
+      <div class="pp">PruneNonEscapingScopes</div>
+      <div class="pp">PruneNonReactiveDependencies</div>
+      <div class="pp">PruneUnusedScopes</div>
+      <div class="pp">MergeReactiveScopesThatInvalidateTogether</div>
+      <div class="pp">PruneAlwaysInvalidatingScopes</div>
+      <div class="pp">PropagateEarlyReturns</div>
+      <div class="pg">Codegen</div>
+      <div class="pp">PruneUnusedLValues</div>
+      <div class="pp">PromoteUsedTemporaries</div>
+      <div class="pp">ExtractScopeDeclarationsFromDestructuring</div>
+      <div class="pp">StabilizeBlockIds</div>
+      <div class="pp">RenameVariables</div>
+      <div class="pp">PruneHoistedContexts</div>
+      <div class="pp cov">Output / SourceMap</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 3 — EXAMPLE ══ -->
+<div class="sl" id="s3">
+  <div class="frame">
+    <div class="eyebrow">Running Example · Source</div>
+    <div class="pipe">
+      <div class="ps on">Source</div><div class="pa">›</div>
+      <div class="ps">HIR</div><div class="pa">›</div><div class="ps">SSA</div><div class="pa">›</div>
+      <div class="ps">Types+Effects</div><div class="pa">›</div><div class="ps">Reactive</div><div class="pa">›</div>
+      <div class="ps">Scopes</div><div class="pa">›</div><div class="ps">Output</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1.15fr 0.85fr;gap:24px;flex:1;min-height:0">
+      <div class="cb">
+        <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">Dashboard.tsx — your source</span></div>
+        <div class="cbody">
+<span class="ln"><span class="kw">function</span> <span class="fn">Dashboard</span>({</span>
+<span class="ln">  orders, searchQuery, statusFilter,</span>
+<span class="ln">  onOrderSelect, userId,</span>
+<span class="ln">) {</span>
+<span class="ln"></span>
+<span class="ln HL"><span class="cm">// ❶ expensive — runs every render</span></span>
+<span class="ln HL"><span class="kw">const</span> filteredOrders = orders</span>
+<span class="ln HL">  .<span class="fn">filter</span>(o => o.status === statusFilter &&</span>
+<span class="ln HL">    o.description.<span class="fn">toLowerCase</span>().<span class="fn">includes</span>(searchQuery))</span>
+<span class="ln HL">  .<span class="fn">sort</span>((a,b) => <span class="kw">new</span> <span class="fn">Date</span>(b.createdAt) - <span class="kw">new</span> <span class="fn">Date</span>(a.createdAt));</span>
+<span class="ln"></span>
+<span class="ln TL"><span class="cm">// ❷ derived — recalculates every render</span></span>
+<span class="ln TL"><span class="kw">const</span> stats = {</span>
+<span class="ln TL">  total:    filteredOrders.length,</span>
+<span class="ln TL">  revenue:  filteredOrders.<span class="fn">reduce</span>((s,o) => s+o.amount, <span class="num">0</span>),</span>
+<span class="ln TL">  avgValue: filteredOrders.length > <span class="num">0</span></span>
+<span class="ln TL">    ? filteredOrders.<span class="fn">reduce</span>((s,o) => s+o.amount, <span class="num">0</span>) / filteredOrders.length</span>
+<span class="ln TL">    : <span class="num">0</span>,</span>
+<span class="ln TL">};</span>
+<span class="ln"></span>
+<span class="ln LL"><span class="cm">// ❸ new ref every render → children re-render</span></span>
+<span class="ln LL"><span class="kw">const</span> handleSelect = (orderId) => {</span>
+<span class="ln LL">  <span class="fn">logEvent</span>(<span class="str">'order_selected'</span>, { userId, orderId });</span>
+<span class="ln LL">  <span class="fn">onOrderSelect</span>(orderId);</span>
+<span class="ln LL">};</span>
+<span class="ln"></span>
+<span class="ln">  <span class="kw">return</span> (</span>
+<span class="ln">    &lt;<span class="fn">div</span>&gt;</span>
+<span class="ln">      &lt;<span class="fn">StatsBar</span> stats={stats} /&gt;</span>
+<span class="ln">      &lt;<span class="fn">OrderTable</span> orders={filteredOrders} onSelect={handleSelect} /&gt;</span>
+<span class="ln">    &lt;/<span class="fn">div</span>&gt;</span>
+<span class="ln">  );</span>
+<span class="ln">}</span>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px;justify-content:center" class="stg">
+        <div class="nc n-o"><span class="nt">❶ filter + sort</span>Runs on every render. Typing one character re-executes the whole chain — even if only <code>userId</code> changed.</div>
+        <div class="nc n-k"><span class="nt">❷ derived stats</span><code>stats</code> depends on <code>filteredOrders</code> but rebuilds even on renders triggered by unrelated state.</div>
+        <div class="nc n-b"><span class="nt">❸ unstable callback</span>New function object every render → every <code>&lt;OrderTable&gt;</code> child re-renders even when nothing relevant changed.</div>
+        <div class="nc n-g"><span class="nt">After the compiler</span>5 independent cache scopes · 25 slots · Typing in search only re-runs scope @5 · Changing userId only re-runs scope @10</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 4 — HIR ══ -->
+<div class="sl" id="s4">
+  <div class="frame">
+    <div class="eyebrow">Stage 1 of 7</div>
+    <div class="pipe"><div class="ps on">HIR</div><div class="pa">›</div><div class="ps">SSA</div><div class="pa">›</div><div class="ps">Types+Effects</div><div class="pa">›</div><div class="ps">Reactive</div><div class="pa">›</div><div class="ps">Scopes</div><div class="pa">›</div><div class="ps">Output</div></div>
+    <div style="display:grid;grid-template-columns:1.15fr 0.85fr;gap:24px;flex:1;min-height:0">
+      <div class="cb">
+        <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">HIR — every sub-expression gets a name</span></div>
+        <div class="cbody">
+<span class="ln"><span class="cm">// Babel AST → compiler builds HIR</span></span>
+<span class="ln"><span class="cm">// every sub-expression = explicit instruction</span></span>
+<span class="ln"></span>
+<span class="ln"><span class="op">$orders</span>       = <span class="fn">LoadParam</span> <span class="str">"orders"</span></span>
+<span class="ln"><span class="op">$searchQuery</span>  = <span class="fn">LoadParam</span> <span class="str">"searchQuery"</span></span>
+<span class="ln"><span class="op">$statusFilter</span> = <span class="fn">LoadParam</span> <span class="str">"statusFilter"</span></span>
+<span class="ln"><span class="op">$userId</span>       = <span class="fn">LoadParam</span> <span class="str">"userId"</span></span>
+<span class="ln"></span>
+<span class="ln HL"><span class="op">$t1</span> = <span class="fn">PropertyLoad</span> <span class="op">$orders</span>.filter</span>
+<span class="ln HL"><span class="op">$t2</span> = <span class="fn">Function</span> @context[<span class="op">$statusFilter</span>, <span class="op">$searchQuery</span>]</span>
+<span class="ln HL">      <span class="cm">// captures $statusFilter and $searchQuery</span></span>
+<span class="ln HL"><span class="op">$t3</span> = <span class="fn">MethodCall</span> <span class="op">$orders</span>.<span class="op">$t1</span>(<span class="op">$t2</span>)</span>
+<span class="ln HL"><span class="op">$t5</span> = <span class="fn">Function</span> @context[]   <span class="cm">// sort comparator</span></span>
+<span class="ln HL"><span class="op">filteredOrders</span> = <span class="fn">MethodCall</span> <span class="op">$t3</span>.sort(<span class="op">$t5</span>)</span>
+<span class="ln"></span>
+<span class="ln TL"><span class="op">$len</span>     = <span class="fn">PropertyLoad</span> <span class="op">filteredOrders</span>.length</span>
+<span class="ln TL"><span class="op">$revenue</span> = <span class="fn">MethodCall</span> <span class="op">filteredOrders</span>.reduce(fn, <span class="num">0</span>)</span>
+<span class="ln TL"><span class="op">$avg</span>     = <span class="fn">Ternary</span> (<span class="op">$len</span>&gt;<span class="num">0</span>) ? reduce/len : <span class="num">0</span></span>
+<span class="ln TL"><span class="op">stats</span>    = <span class="fn">Object</span>{total:<span class="op">$len</span>, revenue:<span class="op">$revenue</span>, avgValue:<span class="op">$avg</span>}</span>
+<span class="ln"></span>
+<span class="ln LL"><span class="op">handleSelect</span> = <span class="fn">Function</span> @context[<span class="op">$userId</span>, <span class="op">$onOrderSelect</span>]</span>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px;justify-content:center" class="stg">
+        <div class="h2" style="font-size:28px">HIR Build</div>
+        <p class="lead" style="font-size:14px">AST → Internal IR with Basic Blocks. Every sub-expression gets a unique name.</p>
+        <div class="hr"></div>
+        <div class="nc n-b"><span class="nt">Why naming matters</span>Without explicit temporaries, the compiler can't trace that <code>stats</code> depends on <code>filteredOrders</code> which depends on <code>$searchQuery</code>.</div>
+        <div class="nc n-o"><span class="nt">What's still missing</span>Variables can be assigned in multiple branches. Which assignment is authoritative? Can't build a dep graph yet — needs SSA.</div>
+        <div class="nc n-k"><span class="nt">Also: DropManualMemoization</span>Your existing <code>useMemo</code> / <code>useCallback</code> are removed in this phase and rebuilt more precisely by the compiler.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 5 — SSA ══ -->
+<div class="sl" id="s5">
+  <div class="frame">
+    <div class="eyebrow">Stage 2 of 7</div>
+    <div class="pipe"><div class="ps">HIR</div><div class="pa">›</div><div class="ps on">SSA</div><div class="pa">›</div><div class="ps">Types+Effects</div><div class="pa">›</div><div class="ps">Reactive</div><div class="pa">›</div><div class="ps">Scopes</div><div class="pa">›</div><div class="ps">Output</div></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;flex:1;min-height:0">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div class="cb" style="flex:1;min-height:0">
+          <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">Before SSA — ambiguous</span></div>
+          <div class="cbody" style="font-size:11.5px">
+<span class="ln"><span class="cm">// same name, two possible sources</span></span>
+<span class="ln"><span class="kw">let</span> filteredOrders;</span>
+<span class="ln"><span class="kw">if</span> (cache_miss) {</span>
+<span class="ln HL">  filteredOrders = orders.<span class="fn">filter</span>(...).<span class="fn">sort</span>(...); <span class="cm">// A</span></span>
+<span class="ln">} <span class="kw">else</span> {</span>
+<span class="ln HL">  filteredOrders = $[<span class="num">3</span>]; <span class="cm">// B — from cache</span></span>
+<span class="ln">}</span>
+<span class="ln"><span class="fn">use</span>(filteredOrders); <span class="cm">// which one?</span></span>
+          </div>
+        </div>
+        <div class="cb" style="flex:1;min-height:0">
+          <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">After SSA — from playground</span></div>
+          <div class="cbody" style="font-size:11.5px">
+<span class="ln"><span class="cm">// unique subscript per assignment</span></span>
+<span class="ln"><span class="kw">let</span> filteredOrders;</span>
+<span class="ln"><span class="kw">if</span> (cache_miss) {</span>
+<span class="ln TL">  <span class="ty">filteredOrders$159</span> = orders.<span class="fn">filter</span>(...).<span class="fn">sort</span>(...);</span>
+<span class="ln">} <span class="kw">else</span> {</span>
+<span class="ln TL">  <span class="ty">filteredOrders$223</span> = $[<span class="num">3</span>];</span>
+<span class="ln">}</span>
+<span class="ln"><span class="cm">// Phi node merges at join point:</span></span>
+<span class="ln TL"><span class="ty">filteredOrders$final</span> = φ(<span class="ty">$159</span>, <span class="ty">$223</span>)</span>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px;justify-content:center" class="stg">
+        <div class="h2" style="font-size:28px">Static Single <em>Assignment</em></div>
+        <p class="lead" style="font-size:14px">Every variable name is assigned exactly once. Branches get unique subscripts. Phi nodes merge at join points.</p>
+        <div class="hr"></div>
+        <div class="nc n-g"><span class="nt">SSA rule</span>Each branch gets its own subscript: <code>$159</code> vs <code>$223</code>. A Phi node (φ) at the merge point makes both sources traceable — every use points to exactly one definition.</div>
+        <div class="nc n-o"><span class="nt">What's still missing</span>We have unambiguous identities. But we don't know the type of each value, or what operations are performed on it. Can it be mutated? Does it escape scope?</div>
+        <div class="nc n-b"><span class="nt">Answer</span>Type inference + effect analysis — the next stage.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 6 — TYPES + EFFECTS ══ -->
+<div class="sl" id="s6">
+  <div class="frame">
+    <div class="eyebrow">Stage 3 + 4 of 7</div>
+    <div class="pipe"><div class="ps">HIR</div><div class="pa">›</div><div class="ps">SSA</div><div class="pa">›</div><div class="ps on">Types+Effects</div><div class="pa">›</div><div class="ps">Reactive</div><div class="pa">›</div><div class="ps">Scopes</div><div class="pa">›</div><div class="ps">Output</div></div>
+    <div style="display:grid;grid-template-columns:1.15fr 0.85fr;gap:24px;flex:1;min-height:0">
+      <div class="cb">
+        <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">InferMutationAliasingEffects — from playground</span></div>
+        <div class="cbody" style="font-size:11.5px">
+<span class="ln"><span class="cm">// props → all FROZEN (immutable inputs from React)</span></span>
+<span class="ln"><span class="ty">orders$116</span>:<span class="ty">TObject</span>         = Destructure  <span class="fn">Create+Frozen</span></span>
+<span class="ln"><span class="ty">searchQuery$118</span>             = Destructure  <span class="fn">Create+Frozen</span></span>
+<span class="ln"><span class="ty">onOrderSelect$120</span>:<span class="ty">TFunction</span> = Destructure  <span class="fn">Create+Frozen</span></span>
+<span class="ln"><span class="ty">userId$121</span>                  = Destructure  <span class="fn">Create+Frozen</span></span>
+<span class="ln"></span>
+<span class="ln HL"><span class="cm">// filter fn — captures → aliasingEffects:</span></span>
+<span class="ln HL"><span class="ty">$125</span>:<span class="ty">TFunction</span> = Function</span>
+<span class="ln HL">  @context[<span class="fn">read</span> statusFilter, <span class="fn">read</span> searchQuery]</span>
+<span class="ln HL">  <span class="fn">Capture</span> searchQuery ← o</span>
+<span class="ln HL">  <span class="fn">Create</span> $27 = mutable</span>
+<span class="ln HL">  <span class="fn">MutateTransitiveConditionally</span> searchQuery</span>
+<span class="ln"></span>
+<span class="ln TL"><span class="cm">// filteredOrders: Created → Frozen at JSX</span></span>
+<span class="ln TL"><span class="ty">filteredOrders$159</span> = MethodCall filter+sort</span>
+<span class="ln TL">  <span class="fn">Create</span> = mutable     <span class="cm">// new array</span></span>
+<span class="ln TL">  → later: <span class="fn">Freeze</span> jsx-captured   <span class="cm">// locked</span></span>
+<span class="ln"></span>
+<span class="ln LL"><span class="cm">// handleSelect: captures userId + onOrderSelect</span></span>
+<span class="ln LL"><span class="ty">$205</span>:<span class="ty">TFunction</span> = Function</span>
+<span class="ln LL">  @context[<span class="fn">read</span> userId, <span class="fn">read</span> onOrderSelect]</span>
+<span class="ln LL">  <span class="fn">Capture</span> userId ← orderId</span>
+<span class="ln LL">  → later: <span class="fn">Freeze</span> jsx-captured</span>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;justify-content:center" class="stg">
+        <div class="h2" style="font-size:26px">Type Inference<br>+ <em>Effect Analysis</em></div>
+        <p class="lead" style="font-size:13.5px">Classify each value. Annotate every instruction with what it does to that value.</p>
+        <div class="hr" style="margin:10px 0"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;flex-shrink:0">
+          <div style="background:var(--paper2);border:1px solid var(--rule);border-radius:5px;padding:7px 10px"><div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--accent2);font-weight:500;margin-bottom:2px">Create</div><div style="font-size:11px;color:var(--ink3)">New value, mutable</div></div>
+          <div style="background:var(--paper2);border:1px solid var(--rule);border-radius:5px;padding:7px 10px"><div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--accent);font-weight:500;margin-bottom:2px">Mutate</div><div style="font-size:11px;color:var(--ink3)">Direct modification</div></div>
+          <div style="background:var(--paper2);border:1px solid var(--rule);border-radius:5px;padding:7px 10px"><div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--accent);font-weight:500;margin-bottom:2px">MutateTrans</div><div style="font-size:11px;color:var(--ink3)">Via alias/closure</div></div>
+          <div style="background:var(--paper2);border:1px solid var(--rule);border-radius:5px;padding:7px 10px"><div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--gold);font-weight:500;margin-bottom:2px">Capture</div><div style="font-size:11px;color:var(--ink3)">Stored in closure</div></div>
+          <div style="background:var(--paper2);border:1px solid var(--rule);border-radius:5px;padding:7px 10px"><div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--ink4);font-weight:500;margin-bottom:2px">Read</div><div style="font-size:11px;color:var(--ink3)">Read-only, safe</div></div>
+          <div style="background:var(--paper2);border:1px solid var(--rule);border-radius:5px;padding:7px 10px"><div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--accent3);font-weight:500;margin-bottom:2px">Freeze</div><div style="font-size:11px;color:var(--ink3)">Passed to React</div></div>
+        </div>
+        <div class="nc n-b"><span class="nt">Freeze = safe to cache</span>Once Frozen (passed to JSX), a value's mutable range ends. The compiler knows nothing can mutate it later — safe to cache.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 7 — REACTIVE ══ -->
+<div class="sl" id="s7">
+  <div class="frame">
+    <div class="eyebrow">Stage 5 of 7</div>
+    <div class="pipe"><div class="ps">HIR</div><div class="pa">›</div><div class="ps">SSA</div><div class="pa">›</div><div class="ps">Types+Effects</div><div class="pa">›</div><div class="ps on">Reactive</div><div class="pa">›</div><div class="ps">Scopes</div><div class="pa">›</div><div class="ps">Output</div></div>
+    <div style="display:grid;grid-template-columns:1.15fr 0.85fr;gap:24px;flex:1;min-height:0">
+      <div class="cb">
+        <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">InferReactivePlaces — {reactive} marks, from playground</span></div>
+        <div class="cbody" style="font-size:11.5px">
+<span class="ln"><span class="cm">// props → always reactive (come from React)</span></span>
+<span class="ln"><span class="ty">orders$116{reactive}</span>        <span class="cm">// from props</span></span>
+<span class="ln"><span class="ty">searchQuery$118{reactive}</span>   <span class="cm">// from props</span></span>
+<span class="ln"><span class="ty">statusFilter$119{reactive}</span>  <span class="cm">// from props</span></span>
+<span class="ln"><span class="ty">userId$121{reactive}</span>        <span class="cm">// from props</span></span>
+<span class="ln"><span class="ty">onOrderSelect$120{reactive}</span></span>
+<span class="ln"></span>
+<span class="ln HL"><span class="cm">// filteredOrders — reactive (reads 3 reactive props)</span></span>
+<span class="ln HL"><span class="ty">filteredOrders$159{reactive}</span></span>
+<span class="ln HL">  uses <span class="ty">$orders{reactive}</span>       <span class="cm">// changes → refilter</span></span>
+<span class="ln HL">  uses <span class="ty">$searchQuery{reactive}</span>   <span class="cm">// changes → refilter</span></span>
+<span class="ln HL">  uses <span class="ty">$statusFilter{reactive}</span>  <span class="cm">// changes → refilter</span></span>
+<span class="ln"></span>
+<span class="ln TL"><span class="cm">// stats — reactive (derived from filteredOrders)</span></span>
+<span class="ln TL"><span class="ty">stats$201{reactive}</span> = Object {</span>
+<span class="ln TL">  total:    <span class="ty">$162{reactive}</span>,</span>
+<span class="ln TL">  revenue:  <span class="ty">$173{reactive}</span>,</span>
+<span class="ln TL">  avgValue: <span class="ty">$199{reactive}</span></span>
+<span class="ln TL">}</span>
+<span class="ln"></span>
+<span class="ln LL"><span class="cm">// handleSelect — reactive (captures reactive props)</span></span>
+<span class="ln LL"><span class="ty">handleSelect$217{reactive}</span> = Function</span>
+<span class="ln LL">  @context[<span class="ty">userId{reactive}</span>, <span class="ty">onOrderSelect{reactive}</span>]</span>
+<span class="ln"></span>
+<span class="ln"><span class="cm">// logEvent — NOT reactive (stable global)</span></span>
+<span class="ln">logEvent = <span class="fn">LoadGlobal</span>  <span class="cm">// no {reactive} → stable</span></span>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px;justify-content:center" class="stg">
+        <div class="h2" style="font-size:28px"><em>Reactive</em> Analysis</div>
+        <p class="lead" style="font-size:14px">Mark every value derived from props or state as <code>{reactive}</code>. Traced transitively through the dep graph.</p>
+        <div class="hr"></div>
+        <div class="nc n-k"><span class="nt">Two groups emerge</span><strong>Group A:</strong> <code>filteredOrders</code> + <code>stats</code> depend on <code>orders</code>, <code>searchQuery</code>, <code>statusFilter</code><br><br><strong>Group B:</strong> <code>handleSelect</code> depends only on <code>userId</code>, <code>onOrderSelect</code></div>
+        <div class="nc n-o"><span class="nt">What's still missing</span>We know what's reactive. We need to know which values share one cache check vs need independent ones — that's scope discovery.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 8 — SCOPES ══ -->
+<div class="sl" id="s8">
+  <div class="frame">
+    <div class="eyebrow">Stage 6 of 7</div>
+    <div class="pipe"><div class="ps">HIR</div><div class="pa">›</div><div class="ps">SSA</div><div class="pa">›</div><div class="ps">Types+Effects</div><div class="pa">›</div><div class="ps">Reactive</div><div class="pa">›</div><div class="ps on">Scopes</div><div class="pa">›</div><div class="ps">Output</div></div>
+    <p class="lead" style="font-size:13.5px;margin-bottom:14px;flex-shrink:0">The compiler groups reactive values into numbered <strong>scopes</strong> — each becomes one <code>if (deps changed) { ... }</code> block in the output.</p>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px;flex-shrink:0">
+      <div class="scc" style="border-top:3px solid var(--accent)"><div class="sl-h">scope @5</div><div class="sl-n" style="color:var(--accent)">filteredOrders<br>+ stats values</div><div class="sl-d" style="color:var(--accent)">deps: [orders, searchQuery, statusFilter]</div><div class="sl-s">$[0..9]</div></div>
+      <div class="scc" style="border-top:3px solid var(--accent4)"><div class="sl-h">scope @9</div><div class="sl-n" style="color:var(--accent4)">stats object</div><div class="sl-d" style="color:var(--accent4)">deps: [len, revenue, avg]</div><div class="sl-s">$[10..13]</div></div>
+      <div class="scc" style="border-top:3px solid var(--accent2)"><div class="sl-h">scope @10</div><div class="sl-n" style="color:var(--accent2)">handleSelect</div><div class="sl-d" style="color:var(--accent2)">deps: [userId, onOrderSelect]</div><div class="sl-s">$[14..16]</div></div>
+      <div class="scc" style="border-top:3px solid var(--gold)"><div class="sl-h">scope @11</div><div class="sl-n" style="color:var(--gold)">&lt;StatsBar&gt;</div><div class="sl-d" style="color:var(--gold)">deps: [stats]</div><div class="sl-s">$[17..18]</div></div>
+      <div class="scc" style="border-top:3px solid var(--accent3)"><div class="sl-h">scope @12+13</div><div class="sl-n" style="color:var(--accent3)">&lt;OrderTable&gt;<br>+ &lt;div&gt;</div><div class="sl-d" style="color:var(--accent3)">deps: [filteredOrders, handleSelect]</div><div class="sl-s">$[19..24]</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;flex-shrink:0">
+      <div class="nc n-o"><span class="nt">Same deps → same scope</span><code>filteredOrders</code>, <code>length</code>, <code>revenue</code>, <code>avg</code> all depend on the same 3 props → grouped in scope @5. One check, not four.</div>
+      <div class="nc n-g"><span class="nt">Different deps → different scope</span><code>handleSelect</code> only needs <code>userId</code> + <code>onOrderSelect</code>. Completely independent — typing in search never recreates it.</div>
+      <div class="nc n-b"><span class="nt">_c(25) — all known at compile time</span>Each dep + each declaration gets its own slot. All 25 slots computed at build time. Zero dynamic allocation at runtime.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 9 — CODEGEN ══ -->
+<div class="sl" id="s9">
+  <div class="frame">
+    <div class="eyebrow">Stage 7 of 7</div>
+    <div class="pipe"><div class="ps">HIR</div><div class="pa">›</div><div class="ps">SSA</div><div class="pa">›</div><div class="ps">Types+Effects</div><div class="pa">›</div><div class="ps">Reactive</div><div class="pa">›</div><div class="ps">Scopes</div><div class="pa">›</div><div class="ps on">Output</div></div>
+    <div style="display:grid;grid-template-columns:1.15fr 0.85fr;gap:24px;flex:1;min-height:0">
+      <div class="cb">
+        <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">compiler output — actual output from playground, _c(25)</span></div>
+        <div class="cbody" style="font-size:10.5px">
+<span class="ln"><span class="kw">import</span> { c <span class="kw">as</span> _c } <span class="kw">from</span> <span class="str">"react/compiler-runtime"</span>;</span>
+<span class="ln"><span class="kw">function</span> <span class="fn">Dashboard</span>(t0) {</span>
+<span class="ln">  <span class="kw">const</span> $ = <span class="fn">_c</span>(<span class="num">25</span>); <span class="cm">// flat array, size fixed at compile time</span></span>
+<span class="ln">  <span class="kw">const</span> { orders, searchQuery, statusFilter, onOrderSelect, userId } = t0;</span>
+<span class="ln"></span>
+<span class="ln HL">  <span class="cm">// scope @5 — deps: [orders, searchQuery, statusFilter]</span></span>
+<span class="ln HL">  <span class="kw">if</span> ($[<span class="num">0</span>] !== orders || $[<span class="num">1</span>] !== searchQuery || $[<span class="num">2</span>] !== statusFilter) {</span>
+<span class="ln HL">    <span class="kw">let</span> t4; <span class="cm">// inner scope @4 — filter fn</span></span>
+<span class="ln HL">    <span class="kw">if</span> ($[<span class="num">7</span>] !== searchQuery || $[<span class="num">8</span>] !== statusFilter) {</span>
+<span class="ln HL">      t4 = o => o.status===statusFilter && o.description.<span class="fn">toLowerCase</span>().<span class="fn">includes</span>(searchQuery);</span>
+<span class="ln HL">      $[<span class="num">7</span>]=searchQuery; $[<span class="num">8</span>]=statusFilter; $[<span class="num">9</span>]=t4;</span>
+<span class="ln HL">    } <span class="kw">else</span> { t4=$[<span class="num">9</span>]; }</span>
+<span class="ln HL">    filteredOrders = orders.<span class="fn">filter</span>(t4).<span class="fn">sort</span>(_temp);</span>
+<span class="ln HL">    t1=filteredOrders.length; t2=filteredOrders.<span class="fn">reduce</span>(_temp2,<span class="num">0</span>);</span>
+<span class="ln HL">    t3 = filteredOrders.length > <span class="num">0</span></span>
+<span class="ln HL">      ? filteredOrders.<span class="fn">reduce</span>(_temp3, <span class="num">0</span>) / filteredOrders.length : <span class="num">0</span>;</span>
+<span class="ln HL">    $[<span class="num">0</span>]=orders; $[<span class="num">1</span>]=searchQuery; $[<span class="num">2</span>]=statusFilter;</span>
+<span class="ln HL">    $[<span class="num">3</span>]=filteredOrders; $[<span class="num">4</span>]=t1; $[<span class="num">5</span>]=t2; $[<span class="num">6</span>]=t3;</span>
+<span class="ln HL">  } <span class="kw">else</span> { filteredOrders=$[<span class="num">3</span>]; t1=$[<span class="num">4</span>]; t2=$[<span class="num">5</span>]; t3=$[<span class="num">6</span>]; }</span>
+<span class="ln"></span>
+<span class="ln TL">  <span class="cm">// scope @9 — deps: [t1, t2, t3]</span></span>
+<span class="ln TL">  <span class="kw">if</span>($[<span class="num">10</span>]!==t1||$[<span class="num">11</span>]!==t2||$[<span class="num">12</span>]!==t3){</span>
+<span class="ln TL">    t4={total:t1,revenue:t2,avgValue:t3}; $[<span class="num">10</span>]=t1;$[<span class="num">11</span>]=t2;$[<span class="num">12</span>]=t3;$[<span class="num">13</span>]=t4;</span>
+<span class="ln TL">  }<span class="kw">else</span>{t4=$[<span class="num">13</span>];} <span class="kw">const</span> stats=t4;</span>
+<span class="ln"></span>
+<span class="ln LL">  <span class="cm">// scope @10 — deps: [onOrderSelect, userId] — INDEPENDENT</span></span>
+<span class="ln LL">  <span class="kw">if</span>($[<span class="num">14</span>]!==onOrderSelect||$[<span class="num">15</span>]!==userId){</span>
+<span class="ln LL">    t5=(orderId)=>{<span class="fn">logEvent</span>(<span class="str">'order_selected'</span>,{userId,orderId});<span class="fn">onOrderSelect</span>(orderId);};</span>
+<span class="ln LL">    $[<span class="num">14</span>]=onOrderSelect;$[<span class="num">15</span>]=userId;$[<span class="num">16</span>]=t5;</span>
+<span class="ln LL">  }<span class="kw">else</span>{t5=$[<span class="num">16</span>];} <span class="kw">const</span> handleSelect=t5;</span>
+<span class="ln"></span>
+<span class="ln SL">  <span class="cm">// scopes @11 @12 @13 — JSX elements cached as objects</span></span>
+<span class="ln SL">  <span class="kw">if</span>($[<span class="num">17</span>]!==stats){t6=&lt;<span class="fn">StatsBar</span> stats={stats}/&gt;;$[<span class="num">17</span>]=stats;$[<span class="num">18</span>]=t6;}<span class="kw">else</span> t6=$[<span class="num">18</span>];</span>
+<span class="ln SL">  <span class="kw">if</span>($[<span class="num">19</span>]!==filteredOrders||$[<span class="num">20</span>]!==handleSelect)</span>
+<span class="ln SL">    {t7=&lt;<span class="fn">OrderTable</span> orders={filteredOrders} onSelect={handleSelect}/&gt;;$[<span class="num">19</span>]=filteredOrders;$[<span class="num">20</span>]=handleSelect;$[<span class="num">21</span>]=t7;}<span class="kw">else</span> t7=$[<span class="num">21</span>];</span>
+<span class="ln SL">  <span class="kw">if</span>($[<span class="num">22</span>]!==t6||$[<span class="num">23</span>]!==t7){t8=&lt;<span class="fn">div</span>&gt;{t6}{t7}&lt;/<span class="fn">div</span>&gt;;$[<span class="num">22</span>]=t6;$[<span class="num">23</span>]=t7;$[<span class="num">24</span>]=t8;}<span class="kw">else</span> t8=$[<span class="num">24</span>];</span>
+<span class="ln SL">  <span class="kw">return</span> t8;</span>
+<span class="ln">}</span>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;justify-content:center" class="stg">
+        <div class="nc n-o" style="font-size:13px"><strong style="color:var(--accent)">Orange guard — scope @5</strong><br>deps: <code>orders, searchQuery, statusFilter</code>. Inner guard @4 for just the filter fn. Typing in search → this runs. Changing userId → skipped.</div>
+        <div class="nc n-p" style="font-size:13px"><strong style="color:var(--accent4)">Purple guard — scope @9</strong><br>deps: computed values from @5. Stats object only rebuilt when filter results change.</div>
+        <div class="nc n-g" style="font-size:13px"><strong style="color:var(--accent2)">Green guard — scope @10</strong><br>deps: <code>userId, onOrderSelect</code>. Completely independent — changing orders never recreates this function.</div>
+        <div class="nc n-b" style="font-size:13px"><strong style="color:var(--accent3)">Blue guards — JSX elements</strong><br>Entire element objects cached. React sees same ref → bails out. No diffing, no fiber walk.</div>
+        <div class="nc n-k" style="font-size:13px"><strong>_c() is not useMemo</strong><br>Flat array on the fiber. O(1) slot access. 25 slots known at compile time. Zero dynamic allocation.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 10 — WHEN IT WON'T WORK ══ -->
+<div class="sl" id="s10">
+  <div class="frame">
+    <div class="eyebrow">Limitations</div>
+    <div class="h2" style="margin-bottom:6px">When the compiler <em>skips</em></div>
+    <p class="lead" style="font-size:13.5px;margin-bottom:16px;flex-shrink:0">Skips gracefully — original code unchanged, no errors — when it can't guarantee safety.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;flex:1;min-height:0">
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="cb" style="flex:1;min-height:0">
+          <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">❌ Conditional hooks</span></div>
+          <div class="cbody" style="font-size:11px">
+<span class="ln"><span class="kw">function</span> <span class="fn">MyComponent</span>({ shouldFetch }) {</span>
+<span class="ln HL">  <span class="kw">if</span> (shouldFetch) {</span>
+<span class="ln HL">    <span class="kw">const</span> data = <span class="fn">useQuery</span>(<span class="str">"/api/data"</span>);</span>
+<span class="ln HL">  } <span class="cm">// hook in conditional → entire fn skipped</span></span>
+<span class="ln">};</span>
+          </div>
+        </div>
+        <div class="cb" style="flex:1;min-height:0">
+          <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">❌ Hooks in loops</span></div>
+          <div class="cbody" style="font-size:11px">
+<span class="ln"><span class="kw">function</span> <span class="fn">TodoList</span>({ items }) {</span>
+<span class="ln">  <span class="kw">return</span> items.<span class="fn">map</span>(item => {</span>
+<span class="ln HL">    <span class="kw">const</span> [done, setDone] = <span class="fn">useState</span>(<span class="kw">false</span>);</span>
+<span class="ln HL">    <span class="cm">// useState inside .map → skip</span></span>
+<span class="ln">    <span class="kw">return</span> &lt;<span class="fn">TodoItem</span> key={item.id} /&gt;;</span>
+<span class="ln">  });</span>
+<span class="ln">}</span>
+          </div>
+        </div>
+        <div class="cb" style="flex:1;min-height:0">
+          <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">❌ Class components</span></div>
+          <div class="cbody" style="font-size:11px">
+<span class="ln"><span class="cm">// class components not supported</span></span>
+<span class="ln"><span class="kw">class</span> <span class="ty">MyComponent</span> <span class="kw">extends</span> <span class="ty">React.Component</span> {</span>
+<span class="ln HL">  <span class="fn">render</span>() {</span>
+<span class="ln HL">    <span class="kw">return</span> &lt;<span class="fn">div</span>&gt;{<span class="kw">this</span>.props.data}&lt;/<span class="fn">div</span>&gt;;</span>
+<span class="ln HL">  }</span>
+<span class="ln">}</span>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="cb" style="flex:1;min-height:0">
+          <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">❌ Global state mutations</span></div>
+          <div class="cbody" style="font-size:11px">
+<span class="ln"><span class="kw">let</span> globalCounter = <span class="num">0</span>;</span>
+<span class="ln"><span class="kw">function</span> <span class="fn">Counter</span>() {</span>
+<span class="ln HL">  globalCounter++; <span class="cm">// Mutate on global → unsafe</span></span>
+<span class="ln">  <span class="kw">return</span> &lt;<span class="fn">div</span>&gt;{globalCounter}&lt;/<span class="fn">div</span>&gt;;</span>
+<span class="ln">}</span>
+          </div>
+        </div>
+        <div class="cb" style="flex:1;min-height:0">
+          <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">❌ Direct DOM manipulation</span></div>
+          <div class="cbody" style="font-size:11px">
+<span class="ln"><span class="kw">function</span> <span class="fn">MyComponent</span>() {</span>
+<span class="ln HL">  document.title = <span class="str">'New Title'</span>; <span class="cm">// side effect in render</span></span>
+<span class="ln">};</span>
+          </div>
+        </div>
+        <div class="cb" style="flex:1;min-height:0">
+          <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">✅ Already memoized — compiler rebuilds it better</span></div>
+          <div class="cbody" style="font-size:11px">
+<span class="ln"><span class="cm">// DropManualMemoization removes your useMemo</span></span>
+<span class="ln"><span class="cm">// and rebuilds it more precisely</span></span>
+<span class="ln"><span class="kw">const</span> filtered = <span class="fn">useMemo</span>(</span>
+<span class="ln TL">  () => data.<span class="fn">filter</span>(item => item.category === filter),</span>
+<span class="ln TL">  [data, filter]  <span class="cm">// compiler will recompute this</span></span>
+<span class="ln">);</span>
+          </div>
+        </div>
+        <div class="nc n-g" style="flex-shrink:0"><span class="nt">Safe fallback + opt out</span>When skipped, original code is emitted unchanged. Use <code>'use no memo'</code> at the top of a function to explicitly opt out.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 11 — REACT 19 INTRO ══ -->
+<div class="sl" id="s11">
+  <div class="frame" style="justify-content:center;max-width:720px">
+    <svg style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none" viewBox="0 0 1440 900" fill="none">
+      <text x="800" y="600" font-family="DM Serif Display" font-size="220" fill="rgba(26,23,20,.025)" font-style="italic" font-weight="400">19</text>
+    </svg>
+    <div class="stg">
+      <div class="eyebrow">React 19</div>
+      <!-- React 19 logo hint -->
+      <svg width="40" height="40" viewBox="0 0 100 100" style="margin-bottom:14px;display:block">
+        <circle cx="50" cy="50" r="10" fill="var(--accent2)"/>
+        <ellipse cx="50" cy="50" rx="44" ry="16" stroke="var(--accent2)" stroke-width="3" fill="none"/>
+        <ellipse cx="50" cy="50" rx="44" ry="16" stroke="var(--accent2)" stroke-width="3" fill="none" transform="rotate(60 50 50)"/>
+        <ellipse cx="50" cy="50" rx="44" ry="16" stroke="var(--accent2)" stroke-width="3" fill="none" transform="rotate(120 50 50)"/>
+      </svg>
+      <div class="title-xl" style="font-size:clamp(38px,5vw,62px)">New hooks.<br>New <span class="g">primitives</span>.<br>Better <em>ergonomics</em>.</div>
+      <div class="hr"></div>
+      <p class="lead" style="font-size:15px">React 19 ships new hooks that solve patterns previously requiring complex workarounds. The compiler works alongside all of them.</p>
+      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:0;margin-top:24px;border:1px solid var(--rule);border-radius:7px;overflow:hidden">
+        <div style="padding:14px;border-right:1px solid var(--rule)"><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent3);font-weight:500;margin-bottom:3px">use()</div><div style="font-size:11px;color:var(--ink4)">Promises + context</div></div>
+        <div style="padding:14px;border-right:1px solid var(--rule)"><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent2);font-weight:500;margin-bottom:3px">useOptimistic</div><div style="font-size:11px;color:var(--ink4)">Instant UI updates</div></div>
+        <div style="padding:14px;border-right:1px solid var(--rule)"><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);font-weight:500;margin-bottom:3px">useActionState</div><div style="font-size:11px;color:var(--ink4)">Form action state</div></div>
+        <div style="padding:14px;border-right:1px solid var(--rule)"><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--gold);font-weight:500;margin-bottom:3px">useFormStatus</div><div style="font-size:11px;color:var(--ink4)">Parent form state</div></div>
+        <div style="padding:14px;border-right:1px solid var(--rule)"><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink3);font-weight:500;margin-bottom:3px">useTransition</div><div style="font-size:11px;color:var(--ink4)">Now async</div></div>
+        <div style="padding:14px"><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink3);font-weight:500;margin-bottom:3px">useDeferredValue</div><div style="font-size:11px;color:var(--ink4)">initialValue param</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- helper macro for hook slides -->
+<style>
+.hook-sl { display:grid; grid-template-columns:0.9fr 1.1fr; gap:24px; flex:1; min-height:0; }
+</style>
+
+<!-- ══ 12 — use() ══ -->
+<div class="sl" id="s12">
+  <div class="frame">
+    <div class="eyebrow">React 19 · Hook 1 of 6</div>
+    <div class="hook-sl">
+      <div style="display:flex;flex-direction:column;gap:13px;justify-content:center" class="stg">
+        <div><div class="h2" style="font-size:30px"><span style="font-family:'JetBrains Mono',monospace;font-size:.6em;color:var(--accent3)">use()</span> <span class="bdg bdg-new">new</span></div><p class="lead" style="font-size:14.5px;margin-top:8px">Unwrap <strong>promises</strong> and <strong>context</strong> directly inside render. Unlike all other hooks — it can be called <strong>conditionally</strong>.</p></div>
+        <div class="hr"></div>
+        <div class="nc n-b"><span class="nt">Replaces</span>The <code>useEffect</code> + state boilerplate pattern for reading async data. Write <code>const data = use(promise)</code> and Suspense handles loading.</div>
+        <div class="nc n-g"><span class="nt">Conditional calls</span><code>use(Context)</code> can be called after early returns, inside conditionals, inside loops. <code>useContext()</code> cannot.</div>
+        <div class="nc n-k"><span class="nt">Server → Client</span>Server component creates a promise and passes it as a prop. Client unwraps with <code>use()</code> — data fetching starts immediately, no waterfall.</div>
+        <div class="nc n-o"><span class="nt">With compiler</span>The <code>use()</code> call itself is not memoized. Values derived from the resolved data are automatically wrapped in cache guards.</div>
+      </div>
+      <div class="cb">
+        <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">use() — promises and context</span></div>
+        <div class="cbody">
+<span class="ln"><span class="kw">import</span> { use } <span class="kw">from</span> <span class="str">'react'</span>;</span>
+<span class="ln"></span>
+<span class="ln"><span class="cm">// ── 1. Unwrap a promise ──────────────────</span></span>
+<span class="ln"><span class="kw">function</span> <span class="fn">OrderList</span>({ ordersPromise }) {</span>
+<span class="ln HL">  <span class="kw">const</span> orders = <span class="fn">use</span>(ordersPromise);</span>
+<span class="ln">  <span class="kw">return</span> &lt;<span class="fn">ul</span>&gt;{orders.<span class="fn">map</span>(o => &lt;<span class="fn">li</span>&gt;{o.id}&lt;/<span class="fn">li</span>&gt;)}&lt;/<span class="fn">ul</span>&gt;;</span>
+<span class="ln">}</span>
+<span class="ln"><span class="cm">// wrap in Suspense — no useEffect/useState needed</span></span>
+<span class="ln">&lt;<span class="fn">Suspense</span> fallback={&lt;<span class="fn">Spinner</span>/&gt;}&gt;</span>
+<span class="ln">  &lt;<span class="fn">OrderList</span> ordersPromise={<span class="fn">fetchOrders</span>()}/&gt;</span>
+<span class="ln">&lt;/<span class="fn">Suspense</span>&gt;</span>
+<span class="ln"></span>
+<span class="ln"><span class="cm">// ── 2. Context after early return ───────</span></span>
+<span class="ln"><span class="kw">function</span> <span class="fn">ThemeButton</span>({ show }) {</span>
+<span class="ln HL">  <span class="kw">if</span> (!show) <span class="kw">return</span> <span class="kw">null</span>;       <span class="cm">// early return OK</span></span>
+<span class="ln HL">  <span class="kw">const</span> theme = <span class="fn">use</span>(ThemeContext); <span class="cm">// after early return OK</span></span>
+<span class="ln">  <span class="kw">return</span> &lt;<span class="fn">button</span> style={theme}&gt;Click&lt;/<span class="fn">button</span>&gt;;</span>
+<span class="ln">} <span class="cm">// useContext() would throw here</span></span>
+<span class="ln"></span>
+<span class="ln"><span class="cm">// ── 3. Server → Client ───────────────────</span></span>
+<span class="ln"><span class="kw">async function</span> <span class="fn">Page</span>() {</span>
+<span class="ln">  <span class="kw">const</span> promise = <span class="fn">fetchOrders</span>(); <span class="cm">// starts immediately</span></span>
+<span class="ln">  <span class="kw">return</span> &lt;<span class="fn">OrderList</span> ordersPromise={promise}/&gt;;</span>
+<span class="ln">}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 13 — useOptimistic ══ -->
+<div class="sl" id="s13">
+  <div class="frame">
+    <div class="eyebrow">React 19 · Hook 2 of 6</div>
+    <div class="hook-sl">
+      <div style="display:flex;flex-direction:column;gap:13px;justify-content:center" class="stg">
+        <div><div class="h2" style="font-size:30px"><span style="font-family:'JetBrains Mono',monospace;font-size:.6em;color:var(--accent2)">useOptimistic()</span> <span class="bdg bdg-new">new</span></div><p class="lead" style="font-size:14.5px;margin-top:8px">Show an <strong>optimistic UI state immediately</strong> while an async action is in flight. Reverts automatically if the action fails.</p></div>
+        <div class="hr"></div>
+        <div class="nc n-g"><span class="nt">What it replaces</span>Two state variables + manual revert logic on error. One hook now handles the full pattern.</div>
+        <div class="nc n-b"><span class="nt">API</span><code>const [optimistic, addOptimistic] = useOptimistic(state, updateFn)</code><br>The <code>updateFn</code> merges the optimistic update into current state.</div>
+        <div class="nc n-k"><span class="nt">Automatic revert</span>When the parent transition resolves (success or error), optimistic state is replaced by actual server state. You never manage rollback.</div>
+        <div class="nc n-o"><span class="nt">Works with useTransition</span>Wrap your server action in <code>startTransition</code>. Optimistic update shows during the transition. React knows when to sync.</div>
+      </div>
+      <div class="cb">
+        <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">useOptimistic() — instant feedback, auto-revert</span></div>
+        <div class="cbody">
+<span class="ln"><span class="kw">import</span> { useOptimistic, useTransition } <span class="kw">from</span> <span class="str">'react'</span>;</span>
+<span class="ln"></span>
+<span class="ln"><span class="kw">function</span> <span class="fn">OrderList</span>({ orders, onMarkShipped }) {</span>
+<span class="ln">  <span class="kw">const</span> [isPending, startTransition] = <span class="fn">useTransition</span>();</span>
+<span class="ln"></span>
+<span class="ln HL">  <span class="kw">const</span> [optimisticOrders, addOptimisticOrder] =</span>
+<span class="ln HL">    <span class="fn">useOptimistic</span>(</span>
+<span class="ln HL">      orders,</span>
+<span class="ln HL">      (currentOrders, shippedId) =>          <span class="cm">// update fn</span></span>
+<span class="ln HL">        currentOrders.<span class="fn">map</span>(o =></span>
+<span class="ln HL">          o.id === shippedId ? {...o, status:<span class="str">'shipped'</span>} : o</span>
+<span class="ln HL">        )</span>
+<span class="ln HL">    );</span>
+<span class="ln"></span>
+<span class="ln">  <span class="kw">const</span> <span class="fn">handleShip</span> = (orderId) => {</span>
+<span class="ln">    <span class="fn">startTransition</span>(<span class="kw">async</span> () => {</span>
+<span class="ln TL">      <span class="fn">addOptimisticOrder</span>(orderId); <span class="cm">// instant UI</span></span>
+<span class="ln">      <span class="kw">await</span> <span class="fn">onMarkShipped</span>(orderId);  <span class="cm">// server call</span></span>
+<span class="ln">      <span class="cm">// success → orders updates from server</span></span>
+<span class="ln">      <span class="cm">// error   → reverts automatically</span></span>
+<span class="ln">    });</span>
+<span class="ln">  };</span>
+<span class="ln"></span>
+<span class="ln">  <span class="kw">return</span> (</span>
+<span class="ln">    &lt;<span class="fn">ul</span>&gt;{optimisticOrders.<span class="fn">map</span>(o => (</span>
+<span class="ln">      &lt;<span class="fn">li</span> key={o.id}&gt;{o.status} <span class="cm">// shows 'shipped' immediately</span></span>
+<span class="ln">        &lt;<span class="fn">button</span> onClick={() => <span class="fn">handleShip</span>(o.id)}&gt;Ship&lt;/<span class="fn">button</span>&gt;</span>
+<span class="ln">      &lt;/<span class="fn">li</span>&gt;</span>
+<span class="ln">    ))}&lt;/<span class="fn">ul</span>&gt;</span>
+<span class="ln">  );</span>
+<span class="ln">}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 14 — useActionState ══ -->
+<div class="sl" id="s14">
+  <div class="frame">
+    <div class="eyebrow">React 19 · Hook 3 of 6</div>
+    <div class="hook-sl">
+      <div style="display:flex;flex-direction:column;gap:13px;justify-content:center" class="stg">
+        <div><div class="h2" style="font-size:30px"><span style="font-family:'JetBrains Mono',monospace;font-size:.6em;color:var(--accent)">useActionState()</span> <span class="bdg bdg-new">new</span></div><p class="lead" style="font-size:14.5px;margin-top:8px">Manage <strong>loading, error, and result state</strong> from form actions in a single hook.</p></div>
+        <div class="hr"></div>
+        <div class="nc n-o"><span class="nt">What it replaces</span>3 separate state variables for pending / error / result. One hook, one source of truth.</div>
+        <div class="nc n-b"><span class="nt">API</span><code>const [state, action, isPending] = useActionState(fn, initialState)</code><br>Action function receives previous state as first arg — easy to accumulate results.</div>
+        <div class="nc n-g"><span class="nt">Progressive enhancement</span>Pass action to <code>&lt;form action={action}&gt;</code>. Works without JavaScript. React hydrates the result server-side.</div>
+        <div class="nc n-k"><span class="nt">Error handling built in</span>Return an error from your action function. No try/catch at the component level needed.</div>
+      </div>
+      <div class="cb">
+        <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">useActionState() — form state in one hook</span></div>
+        <div class="cbody">
+<span class="ln"><span class="kw">import</span> { useActionState } <span class="kw">from</span> <span class="str">'react'</span>;</span>
+<span class="ln"></span>
+<span class="ln"><span class="kw">async function</span> <span class="fn">createOrderAction</span>(prevState, formData) {</span>
+<span class="ln">  <span class="kw">const</span> item = formData.<span class="fn">get</span>(<span class="str">'item'</span>);</span>
+<span class="ln">  <span class="kw">try</span> {</span>
+<span class="ln">    <span class="kw">const</span> order = <span class="kw">await</span> <span class="fn">createOrder</span>({ item });</span>
+<span class="ln">    <span class="kw">return</span> { success: <span class="kw">true</span>, order, error: <span class="kw">null</span> };</span>
+<span class="ln">  } <span class="kw">catch</span> (e) {</span>
+<span class="ln">    <span class="kw">return</span> { success: <span class="kw">false</span>, order: <span class="kw">null</span>, error: e.message };</span>
+<span class="ln">  }</span>
+<span class="ln">}</span>
+<span class="ln"></span>
+<span class="ln"><span class="kw">function</span> <span class="fn">CreateOrderForm</span>() {</span>
+<span class="ln HL">  <span class="kw">const</span> [state, action, isPending] =</span>
+<span class="ln HL">    <span class="fn">useActionState</span>(createOrderAction, {</span>
+<span class="ln HL">      success: <span class="kw">false</span>, order: <span class="kw">null</span>, error: <span class="kw">null</span>,</span>
+<span class="ln HL">    });</span>
+<span class="ln"></span>
+<span class="ln TL">  <span class="kw">return</span> (</span>
+<span class="ln TL">    &lt;<span class="fn">form</span> action={action}&gt;</span>
+<span class="ln TL">      &lt;<span class="fn">input</span> name=<span class="str">"item"</span> disabled={isPending}/&gt;</span>
+<span class="ln TL">      &lt;<span class="fn">button</span> disabled={isPending}&gt;</span>
+<span class="ln TL">        {isPending ? <span class="str">'Creating...'</span> : <span class="str">'Create Order'</span>}</span>
+<span class="ln TL">      &lt;/<span class="fn">button</span>&gt;</span>
+<span class="ln TL">      {state.error && &lt;<span class="fn">p</span>&gt;{state.error}&lt;/<span class="fn">p</span>&gt;}</span>
+<span class="ln TL">      {state.success && &lt;<span class="fn">p</span>&gt;Order #{state.order.id} created!&lt;/<span class="fn">p</span>&gt;}</span>
+<span class="ln TL">    &lt;/<span class="fn">form</span>&gt;</span>
+<span class="ln TL">  );</span>
+<span class="ln">}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 15 — useFormStatus ══ -->
+<div class="sl" id="s15">
+  <div class="frame">
+    <div class="eyebrow">React 19 · Hook 4 of 6</div>
+    <div class="hook-sl">
+      <div style="display:flex;flex-direction:column;gap:13px;justify-content:center" class="stg">
+        <div><div class="h2" style="font-size:30px"><span style="font-family:'JetBrains Mono',monospace;font-size:.6em;color:var(--gold)">useFormStatus()</span> <span class="bdg bdg-new">new</span></div><p class="lead" style="font-size:14.5px;margin-top:8px">Read the <strong>submission state of a parent form</strong> from any child component — no prop drilling.</p></div>
+        <div class="hr"></div>
+        <div class="nc n-k"><span class="nt">What it solves</span>A submit button deep inside a form needs to know if the form is submitting. Previously: pass <code>isPending</code> through every layer. Now: child reads it directly.</div>
+        <div class="nc n-b"><span class="nt">API</span>Import from <code>'react-dom'</code> (not <code>'react'</code>). Must be called inside a component rendered inside a <code>&lt;form&gt;</code>. The form must use the <code>action</code> prop.</div>
+        <div class="nc n-g"><span class="nt">data field</span>Contains the <code>FormData</code> being submitted — useful for showing which values are in-flight or building optimistic UI based on inputs.</div>
+        <div class="nc n-o"><span class="nt">Pattern</span>Extract your submit button into its own component. Use <code>useFormStatus()</code> inside it. Parent form stays clean, button is self-contained.</div>
+      </div>
+      <div class="cb">
+        <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">useFormStatus() — no prop drilling</span></div>
+        <div class="cbody">
+<span class="ln"><span class="kw">import</span> { useFormStatus } <span class="kw">from</span> <span class="str">'react-dom'</span>; <span class="cm">// note: react-dom</span></span>
+<span class="ln"></span>
+<span class="ln"><span class="cm">// self-contained — reads form state itself</span></span>
+<span class="ln"><span class="kw">function</span> <span class="fn">SubmitButton</span>({ label = <span class="str">'Submit'</span> }) {</span>
+<span class="ln HL">  <span class="kw">const</span> { pending, data } = <span class="fn">useFormStatus</span>();</span>
+<span class="ln">  <span class="kw">const</span> submittingItem = data?.<span class="fn">get</span>(<span class="str">'item'</span>);</span>
+<span class="ln"></span>
+<span class="ln">  <span class="kw">return</span> (</span>
+<span class="ln">    &lt;<span class="fn">button</span> type=<span class="str">"submit"</span> disabled={pending}&gt;</span>
+<span class="ln">      {pending ? <span class="str">`Creating "${submittingItem}"...`</span> : label}</span>
+<span class="ln">    &lt;/<span class="fn">button</span>&gt;</span>
+<span class="ln">  );</span>
+<span class="ln">}</span>
+<span class="ln"></span>
+<span class="ln"><span class="cm">// parent form — clean, no isPending prop passed down</span></span>
+<span class="ln"><span class="kw">function</span> <span class="fn">CreateOrderForm</span>({ action }) {</span>
+<span class="ln TL">  <span class="kw">return</span> (</span>
+<span class="ln TL">    &lt;<span class="fn">form</span> action={action}&gt;</span>
+<span class="ln TL">      &lt;<span class="fn">input</span> name=<span class="str">"item"</span> placeholder=<span class="str">"Order item"</span>/&gt;</span>
+<span class="ln TL">      &lt;<span class="fn">SubmitButton</span> label=<span class="str">"Create Order"</span>/&gt; <span class="cm">// no isPending</span></span>
+<span class="ln TL">    &lt;/<span class="fn">form</span>&gt;</span>
+<span class="ln TL">  );</span>
+<span class="ln">}</span>
+<span class="ln"></span>
+<span class="ln"><span class="cm">// ⚠ rules:</span></span>
+<span class="ln"><span class="cm">// 1. import from 'react-dom', not 'react'</span></span>
+<span class="ln"><span class="cm">// 2. component must render inside a &lt;form&gt;</span></span>
+<span class="ln"><span class="cm">// 3. form must use action prop, not onSubmit</span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 16 — useTransition ══ -->
+<div class="sl" id="s16">
+  <div class="frame">
+    <div class="eyebrow">React 19 · Hook 5 of 6</div>
+    <div class="hook-sl">
+      <div style="display:flex;flex-direction:column;gap:13px;justify-content:center" class="stg">
+        <div><div class="h2" style="font-size:30px"><span style="font-family:'JetBrains Mono',monospace;font-size:.6em;color:var(--ink3)">useTransition()</span> <span class="bdg bdg-up">enhanced</span></div><p class="lead" style="font-size:14.5px;margin-top:8px">Now accepts <strong>async functions</strong>. <code>isPending</code> stays true for the entire async operation — including every await.</p></div>
+        <div class="hr"></div>
+        <div class="nc n-g"><span class="nt">What changed in React 19</span>React 18: <code>startTransition</code> only accepted sync functions. React 19: async is fully supported. <code>isPending</code> covers the entire async lifecycle.</div>
+        <div class="nc n-b"><span class="nt">Low-priority rendering</span>Transitions tell React: this is not urgent. If the user types during a transition, React interrupts it and handles the input first.</div>
+        <div class="nc n-o"><span class="nt">Error handling</span>If the async function throws, React catches it and shows the nearest Error Boundary. No try/catch needed inside <code>startTransition</code>.</div>
+        <div class="nc n-k"><span class="nt">With useOptimistic</span>Call <code>addOptimistic()</code> inside <code>startTransition</code>. Optimistic update shows instantly, transition runs the async work, reverts on failure.</div>
+      </div>
+      <div class="cb">
+        <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">useTransition() — async support in React 19</span></div>
+        <div class="cbody">
+<span class="ln"><span class="kw">import</span> { useTransition, useOptimistic } <span class="kw">from</span> <span class="str">'react'</span>;</span>
+<span class="ln"></span>
+<span class="ln"><span class="kw">function</span> <span class="fn">Dashboard</span>({ orders }) {</span>
+<span class="ln">  <span class="kw">const</span> [isPending, startTransition] = <span class="fn">useTransition</span>();</span>
+<span class="ln">  <span class="kw">const</span> [optimistic, addOptimistic] = <span class="fn">useOptimistic</span>(</span>
+<span class="ln">    orders, (cur, id) => cur.<span class="fn">filter</span>(o => o.id !== id)</span>
+<span class="ln">  );</span>
+<span class="ln"></span>
+<span class="ln">  <span class="kw">const</span> <span class="fn">handleDelete</span> = (orderId) => {</span>
+<span class="ln HL">    <span class="fn">startTransition</span>(<span class="kw">async</span> () => {    <span class="cm">// async — new in React 19</span></span>
+<span class="ln HL">      <span class="fn">addOptimistic</span>(orderId);          <span class="cm">// instant UI</span></span>
+<span class="ln HL">      <span class="kw">await</span> <span class="fn">deleteOrder</span>(orderId);     <span class="cm">// isPending stays true here</span></span>
+<span class="ln HL">      <span class="cm">// React syncs server state when done</span></span>
+<span class="ln HL">    });                                 <span class="cm">// isPending → false here</span></span>
+<span class="ln">  };</span>
+<span class="ln"></span>
+<span class="ln"><span class="cm">  // React 18: startTransition(() => {})  — sync only</span></span>
+<span class="ln"><span class="cm">  // React 19: startTransition(async () => {}) — async OK</span></span>
+<span class="ln"></span>
+<span class="ln TL">  <span class="kw">if</span> (isPending) <span class="kw">return</span> &lt;<span class="fn">p</span>&gt;Updating...&lt;/<span class="fn">p</span>&gt;;</span>
+<span class="ln">  <span class="kw">return</span> &lt;<span class="fn">ul</span>&gt;{optimistic.<span class="fn">map</span>(o => (</span>
+<span class="ln">    &lt;<span class="fn">li</span> key={o.id}&gt;{o.id}</span>
+<span class="ln">      &lt;<span class="fn">button</span> onClick={() => <span class="fn">handleDelete</span>(o.id)}&gt;✕&lt;/<span class="fn">button</span>&gt;</span>
+<span class="ln">    &lt;/<span class="fn">li</span>&gt;</span>
+<span class="ln">  ))}&lt;/<span class="fn">ul</span>&gt;;</span>
+<span class="ln">}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 17 — useDeferredValue ══ -->
+<div class="sl" id="s17">
+  <div class="frame">
+    <div class="eyebrow">React 19 · Hook 6 of 6</div>
+    <div class="hook-sl">
+      <div style="display:flex;flex-direction:column;gap:13px;justify-content:center" class="stg">
+        <div><div class="h2" style="font-size:30px"><span style="font-family:'JetBrains Mono',monospace;font-size:.6em;color:var(--ink3)">useDeferredValue()</span> <span class="bdg bdg-up">enhanced</span></div><p class="lead" style="font-size:14.5px;margin-top:8px">Now accepts an <strong>initialValue</strong> parameter — show a placeholder on first render instead of blocking.</p></div>
+        <div class="hr"></div>
+        <div class="nc n-o"><span class="nt">What changed in React 19</span>React 18: no deferral on first render. React 19: <code>useDeferredValue(value, initialValue)</code> shows <code>initialValue</code> on first render, component suspends, then renders with real value.</div>
+        <div class="nc n-b"><span class="nt">Without initialValue</span>First render: deferred = current value (no deferral). Useful for keeping stale results visible while new results load — but no skeleton on first load.</div>
+        <div class="nc n-g"><span class="nt">With initialValue</span>First render: deferred = <code>initialValue</code>. React suspends → shows Suspense fallback → renders with real deferred value. Perfect for skeleton screens.</div>
+        <div class="nc n-k"><span class="nt">vs useTransition</span><code>useTransition</code>: you control when the update starts. <code>useDeferredValue</code>: React automatically defers expensive subtrees that receive the value as a prop.</div>
+      </div>
+      <div class="cb">
+        <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">useDeferredValue() — initialValue in React 19</span></div>
+        <div class="cbody">
+<span class="ln"><span class="kw">import</span> { useDeferredValue, Suspense } <span class="kw">from</span> <span class="str">'react'</span>;</span>
+<span class="ln"></span>
+<span class="ln"><span class="cm">// React 18 — no initialValue</span></span>
+<span class="ln"><span class="kw">function</span> <span class="fn">SearchResults18</span>({ query }) {</span>
+<span class="ln">  <span class="kw">const</span> deferred = <span class="fn">useDeferredValue</span>(query);</span>
+<span class="ln">  <span class="cm">// first render: deferred === query (no deferral)</span></span>
+<span class="ln">  <span class="kw">return</span> &lt;<span class="fn">Results</span> query={deferred}/&gt;;</span>
+<span class="ln">}</span>
+<span class="ln"></span>
+<span class="ln"><span class="cm">// React 19 — with initialValue</span></span>
+<span class="ln"><span class="kw">function</span> <span class="fn">SearchResults19</span>({ query }) {</span>
+<span class="ln HL">  <span class="kw">const</span> deferred = <span class="fn">useDeferredValue</span>(query, <span class="str">''</span>);</span>
+<span class="ln">  <span class="cm">// first render: deferred === '' (initialValue)</span></span>
+<span class="ln">  <span class="cm">// React suspends → shows Suspense fallback</span></span>
+<span class="ln">  <span class="cm">// then renders with real deferred value</span></span>
+<span class="ln">  <span class="kw">return</span> &lt;<span class="fn">Results</span> query={deferred}/&gt;;</span>
+<span class="ln">}</span>
+<span class="ln"></span>
+<span class="ln"><span class="cm">// shows skeleton on first load</span></span>
+<span class="ln"><span class="kw">function</span> <span class="fn">SearchPage</span>({ query }) {</span>
+<span class="ln TL">  <span class="kw">return</span> (</span>
+<span class="ln TL">    &lt;<span class="fn">Suspense</span> fallback={&lt;<span class="fn">ResultsSkeleton</span>/&gt;}&gt;</span>
+<span class="ln TL">      &lt;<span class="fn">SearchResults19</span> query={query}/&gt;</span>
+<span class="ln TL">    &lt;/<span class="fn">Suspense</span>&gt;</span>
+<span class="ln TL">  );</span>
+<span class="ln">}</span>
+<span class="ln"></span>
+<span class="ln"><span class="cm">// with compiler: Results is automatically memoized —</span></span>
+<span class="ln"><span class="cm">// re-renders only when deferred value changes</span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 18 — SUMMARY (after hooks) ══ -->
+<div class="sl" id="s18">
+  <div class="frame" style="justify-content:center;max-width:740px">
+    <svg style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none" viewBox="0 0 1440 900" fill="none">
+      <text x="750" y="680" font-family="DM Serif Display" font-size="260" fill="rgba(26,23,20,.025)" font-style="italic">✓</text>
+    </svg>
+    <div class="stg">
+      <div class="eyebrow">Summary</div>
+      <div class="title-xl" style="font-size:clamp(38px,4.8vw,60px)">Build-time <span class="g">analysis</span>.<br>Runtime <em>zero overhead</em>.</div>
+      <div class="hr"></div>
+      <p class="lead" style="font-size:15px;margin-bottom:22px">Seven passes · Five independent cache scopes · Twenty-five slots · All before a single byte reaches the browser — and six new React 19 hooks to build with.</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+        <div style="background:var(--paper2);border:1px solid var(--rule);border-top:2px solid var(--accent);border-radius:6px;padding:14px 16px">
+          <div style="font-family:'Syne',sans-serif;font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:6px">Compiler — 7 stages</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink3);line-height:1.8">HIR → SSA → Types → Effects<br>→ Reactive → Scopes → Output</div>
+        </div>
+        <div style="background:var(--paper2);border:1px solid var(--rule);border-top:2px solid var(--accent2);border-radius:6px;padding:14px 16px">
+          <div style="font-family:'Syne',sans-serif;font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent2);margin-bottom:6px">React 19 — 6 hooks</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink3);line-height:1.8">use · useOptimistic · useActionState<br>useFormStatus · useTransition · useDeferredValue</div>
+        </div>
+      </div>
+      <div class="nc n-g"><span class="nt">For our Dashboard</span>Typing in search re-runs only scope @5. Changing <code>userId</code> re-runs only scope @10. JSX element objects are reused by reference — React bails out without reconciliation. All computed automatically — no <code>useMemo</code>, no <code>useCallback</code>, no deps arrays.</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- #deck -->
+
+<script>
+const S=[...document.querySelectorAll('.sl')];
+const N=S.length;let c=0;
+const prog=document.getElementById('prog');
+const ctr=document.getElementById('ctr');
+const nav=document.getElementById('nav');
+setTimeout(()=>nav.classList.add('hide'),4500);
+function upd(){prog.style.width=`${(c+1)/N*100}%`;ctr.textContent=`${c+1} / ${N}`}
+function go(n,back){
+  if(n<0||n>=N)return;
+  const p=S[c],nx=S[n];
+  p.classList.remove('on');p.classList.add(back?'leaveBack':'leave');
+  setTimeout(()=>p.classList.remove('leave','leaveBack'),340);
+  nx.style.opacity='0';
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    nx.style.opacity='';nx.classList.add('on');
+    nx.classList.add(back?'enterBack':'enter');
+    setTimeout(()=>nx.classList.remove('enter','enterBack'),520);
+  }));
+  c=n;upd();
+}
+document.addEventListener('keydown',e=>{
+  if(['ArrowRight','ArrowDown',' '].includes(e.key)){e.preventDefault();go(c+1,false)}
+  if(['ArrowLeft','ArrowUp'].includes(e.key)){e.preventDefault();go(c-1,true)}
+  if(e.key==='Home')go(0,true);if(e.key==='End')go(N-1,false);
+});
+let tx=0;
+document.addEventListener('touchstart',e=>{tx=e.touches[0].clientX},{passive:true});
+document.addEventListener('touchend',e=>{const d=e.changedTouches[0].clientX-tx;if(Math.abs(d)>50)go(d<0?c+1:c-1,d>0)},{passive:true});
+document.getElementById('deck').addEventListener('click',e=>{
+  const x=e.clientX/window.innerWidth;
+  if(x>.65)go(c+1,false);else if(x<.35)go(c-1,true);
+});
+upd();
+</script>
+</body>
+</html>
