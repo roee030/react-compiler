@@ -190,8 +190,8 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--pape
 
 /* square video widget */
 .sl-video-sq {
-  width: 400px;
-  height: 300px;
+  width: 240px;
+  height: 240px;
   border-radius: 10px;
   overflow: hidden;
   box-shadow: 0 4px 18px rgba(0,0,0,.13), 0 0 0 1px var(--rule);
@@ -205,7 +205,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--pape
   width: 100%;
   height: 100%;
   display: block;
-  object-fit: fit;
+  object-fit: cover;
 }
 
 /* hook slides: 2-col code blocks side by side, scrollable */
@@ -234,7 +234,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--pape
 </head>
 <body>
 <div id="prog" style="width:0%"></div>
-<div id="ctr">1 / 19</div>
+<div id="ctr">1 / 21</div>
 <div id="nav">← →  ·  space</div>
 <div id="deck">
 
@@ -479,13 +479,10 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--pape
   <div class="frame">
     <div class="eyebrow">Stage 1 of 7</div>
     <div class="pipe"><div class="ps on">HIR</div><div class="pa">›</div><div class="ps">SSA</div><div class="pa">›</div><div class="ps">Types+Effects</div><div class="pa">›</div><div class="ps">Reactive</div><div class="pa">›</div><div class="ps">Scopes</div><div class="pa">›</div><div class="ps">Output</div></div>
-    <div style="display:grid;grid-template-columns:1.15fr 0.85fr;gap:24px;flex:1;min-height:0">
+    <div style="display:grid;grid-template-columns:1.2fr 0.8fr;gap:24px;flex:1;min-height:0">
       <div class="cb">
-        <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">HIR — every sub-expression gets a name</span></div>
-        <div class="cbody">
-<span class="ln"><span class="cm">// Babel AST → compiler builds HIR</span></span>
-<span class="ln"><span class="cm">// every sub-expression = explicit instruction</span></span>
-<span class="ln"></span>
+        <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">HIR — Babel AST → explicit instructions, each sub-expression named</span></div>
+        <div class="cbody" style="font-size:11.5px">
 <span class="ln"><span class="op">$orders</span>       = <span class="fn">LoadParam</span> <span class="str">"orders"</span></span>
 <span class="ln"><span class="op">$searchQuery</span>  = <span class="fn">LoadParam</span> <span class="str">"searchQuery"</span></span>
 <span class="ln"><span class="op">$statusFilter</span> = <span class="fn">LoadParam</span> <span class="str">"statusFilter"</span></span>
@@ -493,27 +490,26 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--pape
 <span class="ln"></span>
 <span class="ln HL"><span class="op">$t1</span> = <span class="fn">PropertyLoad</span> <span class="op">$orders</span>.filter</span>
 <span class="ln HL"><span class="op">$t2</span> = <span class="fn">Function</span> @context[<span class="op">$statusFilter</span>, <span class="op">$searchQuery</span>]</span>
-<span class="ln HL">      <span class="cm">// captures $statusFilter and $searchQuery</span></span>
-<span class="ln HL"><span class="op">$t3</span> = <span class="fn">MethodCall</span> <span class="op">$orders</span>.<span class="op">$t1</span>(<span class="op">$t2</span>)</span>
-<span class="ln HL"><span class="op">$t5</span> = <span class="fn">Function</span> @context[]   <span class="cm">// sort comparator</span></span>
+<span class="ln HL"><span class="op">$t3</span> = <span class="fn">MethodCall</span> <span class="op">$orders</span>.<span class="op">$t1</span>(<span class="op">$t2</span>)     <span class="cm">// .filter(fn)</span></span>
+<span class="ln HL"><span class="op">$t5</span> = <span class="fn">Function</span> @context[]              <span class="cm">// sort comparator</span></span>
 <span class="ln HL"><span class="op">filteredOrders</span> = <span class="fn">MethodCall</span> <span class="op">$t3</span>.sort(<span class="op">$t5</span>)</span>
 <span class="ln"></span>
 <span class="ln TL"><span class="op">$len</span>     = <span class="fn">PropertyLoad</span> <span class="op">filteredOrders</span>.length</span>
 <span class="ln TL"><span class="op">$revenue</span> = <span class="fn">MethodCall</span> <span class="op">filteredOrders</span>.reduce(fn, <span class="num">0</span>)</span>
 <span class="ln TL"><span class="op">$avg</span>     = <span class="fn">Ternary</span> (<span class="op">$len</span>&gt;<span class="num">0</span>) ? reduce/len : <span class="num">0</span></span>
-<span class="ln TL"><span class="op">stats</span>    = <span class="fn">Object</span>{total:<span class="op">$len</span>, revenue:<span class="op">$revenue</span>, avgValue:<span class="op">$avg</span>}</span>
+<span class="ln TL"><span class="op">stats</span>    = <span class="fn">Object</span>{total:<span class="op">$len</span>,revenue:<span class="op">$revenue</span>,avgValue:<span class="op">$avg</span>}</span>
 <span class="ln"></span>
 <span class="ln LL"><span class="op">handleSelect</span> = <span class="fn">Function</span> @context[<span class="op">$userId</span>, <span class="op">$onOrderSelect</span>]</span>
         </div>
       </div>
-      <div style="display:flex;flex-direction:column;gap:12px;justify-content:center" class="stg">
-        <div class="h2" style="font-size:26px">HIR Build</div>
-        <p class="lead" style="font-size:13.5px">AST → Internal IR. Every sub-expression gets a unique name.</p>
+      <div style="display:flex;flex-direction:column;gap:11px" class="stg">
+        <div class="h2" style="font-size:24px">HIR Build</div>
+        <p class="lead" style="font-size:13px">The compiler parses your JSX with Babel and converts the AST into <strong>HIR — High-level Intermediate Representation</strong>. Every single sub-expression gets its own named temporary.</p>
         <div class="hr"></div>
-        <div class="nc n-b"><span class="nt">Why naming matters</span>Without explicit temporaries, the compiler can't trace that <code>stats</code> depends on <code>filteredOrders</code> which depends on <code>$searchQuery</code>.</div>
-        <div class="nc n-o"><span class="nt">What's still missing</span>Variables assigned in multiple branches — which is authoritative? Needs SSA.</div>
-        <div class="nc n-k"><span class="nt">DropManualMemoization</span>Your <code>useMemo</code>/<code>useCallback</code> are removed and rebuilt more precisely.</div>
-        <!-- VIDEO SQUARE -->
+        <div class="nc n-b"><span class="nt">What HIR gives the compiler</span>The chain is now explicit: <code>$t2</code> captures <code>$statusFilter</code> and <code>$searchQuery</code> → <code>$t3</code> calls <code>$t2</code> → <code>filteredOrders</code> is the result. The compiler can now trace every dependency in the graph.</div>
+        <div class="nc n-o"><span class="nt">Before HIR — impossible to analyse</span>In the original AST, <code>orders.filter(...).sort(...)</code> is one opaque chain. The compiler can't see that <code>$searchQuery</code> is captured inside the arrow function. HIR makes it visible.</div>
+        <div class="nc n-k"><span class="nt">DropManualMemoization</span>Also in this phase: any <code>useMemo</code> / <code>useCallback</code> you wrote is removed. The compiler will rebuild memoization from scratch — more precisely than manual deps arrays.</div>
+        <div class="nc n-g"><span class="nt">What's still missing after HIR</span>Variables can be assigned in multiple branches — if both branches assign <code>filteredOrders</code>, which definition is the "real" one? The compiler still can't tell. That's what SSA solves next.</div>
         <div class="sl-video-sq" style="margin-top:auto;align-self:flex-start">
           <video src="HIR.mp4" autoplay muted loop playsinline></video>
         </div>
@@ -528,42 +524,50 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--pape
     <div class="pipe"><div class="ps">HIR</div><div class="pa">›</div><div class="ps on">SSA</div><div class="pa">›</div><div class="ps">Types+Effects</div><div class="pa">›</div><div class="ps">Reactive</div><div class="pa">›</div><div class="ps">Scopes</div><div class="pa">›</div><div class="ps">Output</div></div>
     <div style="display:grid;grid-template-columns:1fr 1fr 0.9fr;gap:16px;flex:1;min-height:0">
       <div class="cb">
-        <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">Before SSA — ambiguous</span></div>
+        <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">Before SSA — the problem</span></div>
         <div class="cbody" style="font-size:11px">
-<span class="ln"><span class="cm">// same name, two possible sources</span></span>
+<span class="ln"><span class="cm">// After HIR, filteredOrders appears TWICE:</span></span>
+<span class="ln"><span class="cm">// once as a computed value, once as a cache hit.</span></span>
+<span class="ln"><span class="cm">// Both use the same name — compiler is blind.</span></span>
+<span class="ln"></span>
 <span class="ln"><span class="kw">let</span> filteredOrders;</span>
 <span class="ln"><span class="kw">if</span> (cache_miss) {</span>
 <span class="ln HL">  filteredOrders = orders.<span class="fn">filter</span>(...).<span class="fn">sort</span>(...);</span>
-<span class="ln HL">  <span class="cm">// assignment A</span></span>
+<span class="ln HL">  <span class="cm">// ← assignment A: fresh computation</span></span>
 <span class="ln">} <span class="kw">else</span> {</span>
-<span class="ln HL">  filteredOrders = $[<span class="num">3</span>]; <span class="cm">// assignment B</span></span>
+<span class="ln HL">  filteredOrders = $[<span class="num">3</span>]; <span class="cm">// ← assignment B: from cache</span></span>
 <span class="ln">}</span>
 <span class="ln"><span class="fn">use</span>(filteredOrders);</span>
-<span class="ln"><span class="cm">// which assignment? compiler can't tell</span></span>
+<span class="ln"><span class="cm">// Which filteredOrders? A or B?</span></span>
+<span class="ln"><span class="cm">// Compiler cannot trace deps — both names identical.</span></span>
         </div>
       </div>
       <div class="cb">
-        <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">After SSA — from playground</span></div>
+        <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">After SSA — unique name per assignment</span></div>
         <div class="cbody" style="font-size:11px">
-<span class="ln"><span class="cm">// each assignment = unique subscript</span></span>
+<span class="ln"><span class="cm">// SSA rule: every assignment gets its own name.</span></span>
+<span class="ln"><span class="cm">// Subscripts make each definition unique.</span></span>
+<span class="ln"></span>
 <span class="ln"><span class="kw">let</span> filteredOrders;</span>
 <span class="ln"><span class="kw">if</span> (cache_miss) {</span>
 <span class="ln TL">  <span class="ty">filteredOrders$159</span> = orders.<span class="fn">filter</span>(...).<span class="fn">sort</span>(...);</span>
+<span class="ln TL">  <span class="cm">// ← $159: this is the "computed" version</span></span>
 <span class="ln">} <span class="kw">else</span> {</span>
-<span class="ln TL">  <span class="ty">filteredOrders$223</span> = $[<span class="num">3</span>];</span>
+<span class="ln TL">  <span class="ty">filteredOrders$223</span> = $[<span class="num">3</span>]; <span class="cm">// ← $223: from cache</span></span>
 <span class="ln">}</span>
-<span class="ln"><span class="cm">// Phi node at join point:</span></span>
+<span class="ln"><span class="cm">// Phi node (φ) = "pick whichever branch ran"</span></span>
 <span class="ln TL"><span class="ty">filteredOrders$final</span> = φ(<span class="ty">$159</span>, <span class="ty">$223</span>)</span>
-<span class="ln"><span class="cm">// every use → exactly one definition</span></span>
+<span class="ln"><span class="cm">// Now every downstream use points to $final,</span></span>
+<span class="ln"><span class="cm">// and $final has exactly ONE clear definition.</span></span>
         </div>
       </div>
-      <div style="display:flex;flex-direction:column;gap:10px;justify-content:center" class="stg">
-        <div class="h2" style="font-size:22px">Static Single <em>Assignment</em></div>
+      <div style="display:flex;flex-direction:column;gap:10px" class="stg">
+        <div class="h2" style="font-size:20px">Static Single <em>Assignment</em></div>
+        <p class="lead" style="font-size:12.5px">HIR gave every expression a name. SSA goes further: every <strong>assignment</strong> gets a unique name too. Now the compiler can trace exactly where each value comes from.</p>
         <div class="hr"></div>
-        <div class="nc n-g" style="font-size:12.5px"><span class="nt">SSA rule</span>Each branch: unique subscript. Phi (φ) merges at join point. Every use → one definition.</div>
-        <div class="nc n-o" style="font-size:12.5px"><span class="nt">Still missing</span>Type of each value? What operations on it? Can it be mutated?</div>
-        <div class="nc n-b" style="font-size:12.5px"><span class="nt">Next</span>Type inference + effect analysis.</div>
-        <!-- VIDEO SQUARE -->
+        <div class="nc n-g" style="font-size:12px"><span class="nt">The rule</span>A variable assigned in 2 branches = 2 different names (<code>$159</code>, <code>$223</code>). A Phi node (φ) at the merge point says "whoever ran, use that one."</div>
+        <div class="nc n-b" style="font-size:12px"><span class="nt">Why this matters for deps</span>After SSA, the compiler knows <code>filteredOrders$159</code> was produced by <code>filter+sort</code>, which reads <code>$orders</code>, <code>$searchQuery</code>, <code>$statusFilter</code>. The dep chain is now traceable with certainty.</div>
+        <div class="nc n-o" style="font-size:12px"><span class="nt">What's still missing</span>We know the identity of each value. But we don't know what <em>type</em> it is or whether it gets <em>mutated</em> after creation. If a value is mutated, it's unsafe to cache. That's what effects analysis solves.</div>
         <div class="sl-video-sq" style="margin-top:auto;align-self:flex-start">
           <video src="SSA.mp4" autoplay muted loop playsinline></video>
         </div>
@@ -676,63 +680,303 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--pape
   <div class="frame">
     <div class="eyebrow">Stage 6 of 7</div>
     <div class="pipe"><div class="ps">HIR</div><div class="pa">›</div><div class="ps">SSA</div><div class="pa">›</div><div class="ps">Types+Effects</div><div class="pa">›</div><div class="ps">Reactive</div><div class="pa">›</div><div class="ps on">Scopes</div><div class="pa">›</div><div class="ps">Output</div></div>
-    <p class="lead" style="font-size:13.5px;margin-bottom:14px;flex-shrink:0">The compiler groups reactive values into numbered <strong>scopes</strong> — each becomes one <code>if (deps changed) { ... }</code> block in the output.</p>
-    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px;flex-shrink:0">
-      <div class="scc" style="border-top:3px solid var(--accent)"><div class="sl-h">scope @5</div><div class="sl-n" style="color:var(--accent)">filteredOrders<br>+ stats values</div><div class="sl-d" style="color:var(--accent)">deps: [orders, searchQuery, statusFilter]</div><div class="sl-s">$[0..9]</div></div>
-      <div class="scc" style="border-top:3px solid var(--accent4)"><div class="sl-h">scope @9</div><div class="sl-n" style="color:var(--accent4)">stats object</div><div class="sl-d" style="color:var(--accent4)">deps: [len, revenue, avg]</div><div class="sl-s">$[10..13]</div></div>
-      <div class="scc" style="border-top:3px solid var(--accent2)"><div class="sl-h">scope @10</div><div class="sl-n" style="color:var(--accent2)">handleSelect</div><div class="sl-d" style="color:var(--accent2)">deps: [userId, onOrderSelect]</div><div class="sl-s">$[14..16]</div></div>
-      <div class="scc" style="border-top:3px solid var(--gold)"><div class="sl-h">scope @11</div><div class="sl-n" style="color:var(--gold)">&lt;StatsBar&gt;</div><div class="sl-d" style="color:var(--gold)">deps: [stats]</div><div class="sl-s">$[17..18]</div></div>
-      <div class="scc" style="border-top:3px solid var(--accent3)"><div class="sl-h">scope @12+13</div><div class="sl-n" style="color:var(--accent3)">&lt;OrderTable&gt;<br>+ &lt;div&gt;</div><div class="sl-d" style="color:var(--accent3)">deps: [filteredOrders, handleSelect]</div><div class="sl-s">$[19..24]</div></div>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;flex-shrink:0">
-      <div class="nc n-o"><span class="nt">Same deps → same scope</span><code>filteredOrders</code>, <code>length</code>, <code>revenue</code>, <code>avg</code> all depend on the same 3 props → grouped in scope @5. One check, not four.</div>
-      <div class="nc n-g"><span class="nt">Different deps → different scope</span><code>handleSelect</code> only needs <code>userId</code> + <code>onOrderSelect</code>. Completely independent — typing in search never recreates it.</div>
-      <div class="nc n-b"><span class="nt">_c(25) — all known at compile time</span>Each dep + each declaration gets its own slot. All 25 slots computed at build time. Zero dynamic allocation at runtime.</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;flex:1;min-height:0">
+
+      <!-- LEFT: how scopes are formed -->
+      <div style="display:flex;flex-direction:column;gap:10px;min-height:0">
+        <p class="lead" style="font-size:13px;flex-shrink:0">From the previous stages we know <strong>which values are reactive</strong> and <strong>which props they depend on</strong>. Now the compiler asks: <em>"Which values always change together?"</em> — those go in the same scope.</p>
+        <div class="nc n-o" style="font-size:12px;flex-shrink:0"><span class="nt">The rule: same deps → same scope</span><code>filteredOrders</code>, <code>len</code>, <code>revenue</code>, <code>avg</code> all react to changes in <code>orders</code>, <code>searchQuery</code>, <code>statusFilter</code>. If any of those props change, all four recompute together. One scope, one cache check.</div>
+        <div class="nc n-g" style="font-size:12px;flex-shrink:0"><span class="nt">Different deps → different scope</span><code>handleSelect</code> only depends on <code>userId</code> and <code>onOrderSelect</code>. Typing in the search box never needs to recreate it. It lives in its own independent scope.</div>
+        <!-- Scope → slot assignment visual -->
+        <div style="background:var(--paper2);border:1px solid var(--rule);border-radius:8px;padding:12px 14px;flex:1;min-height:0;overflow-y:auto">
+          <div style="font-family:'Syne',sans-serif;font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ink4);margin-bottom:10px">How each value gets its slot</div>
+          <!-- each row: value → why this scope → slot -->
+          <div style="display:grid;grid-template-columns:auto 1fr auto;gap:4px 12px;font-family:'JetBrains Mono',monospace;font-size:10px;align-items:start">
+            <span style="color:var(--accent);font-weight:500">orders</span><span style="color:var(--ink3)">dep of scope @5 → saved to compare next render</span><span style="color:var(--accent)">$[0]</span>
+            <span style="color:var(--accent);font-weight:500">searchQuery</span><span style="color:var(--ink3)">dep of scope @5</span><span style="color:var(--accent)">$[1]</span>
+            <span style="color:var(--accent);font-weight:500">statusFilter</span><span style="color:var(--ink3)">dep of scope @5</span><span style="color:var(--accent)">$[2]</span>
+            <span style="color:var(--accent);font-weight:500">filteredOrders</span><span style="color:var(--ink3)">declaration of scope @5 → cached result</span><span style="color:var(--accent)">$[3]</span>
+            <span style="color:var(--accent);font-weight:500">len</span><span style="color:var(--ink3)">declaration of scope @5</span><span style="color:var(--accent)">$[4]</span>
+            <span style="color:var(--accent);font-weight:500">revenue</span><span style="color:var(--ink3)">declaration of scope @5</span><span style="color:var(--accent)">$[5]</span>
+            <span style="color:var(--accent);font-weight:500">avg</span><span style="color:var(--ink3)">declaration of scope @5</span><span style="color:var(--accent)">$[6]</span>
+            <span style="color:var(--accent);font-weight:500">filterFn dep1</span><span style="color:var(--ink3)">inner scope @4 (filter arrow fn deps)</span><span style="color:var(--accent)">$[7]</span>
+            <span style="color:var(--accent);font-weight:500">filterFn dep2</span><span style="color:var(--ink3)">inner scope @4</span><span style="color:var(--accent)">$[8]</span>
+            <span style="color:var(--accent);font-weight:500">filterFn</span><span style="color:var(--ink3)">inner scope @4 result</span><span style="color:var(--accent)">$[9]</span>
+            <span style="color:var(--accent4);font-weight:500">len</span><span style="color:var(--ink3)">dep of scope @9 (stats object)</span><span style="color:var(--accent4)">$[10]</span>
+            <span style="color:var(--accent4);font-weight:500">revenue</span><span style="color:var(--ink3)">dep of scope @9</span><span style="color:var(--accent4)">$[11]</span>
+            <span style="color:var(--accent4);font-weight:500">avg</span><span style="color:var(--ink3)">dep of scope @9</span><span style="color:var(--accent4)">$[12]</span>
+            <span style="color:var(--accent4);font-weight:500">stats</span><span style="color:var(--ink3)">declaration of scope @9</span><span style="color:var(--accent4)">$[13]</span>
+            <span style="color:var(--accent2);font-weight:500">onOrderSelect</span><span style="color:var(--ink3)">dep of scope @10 (handleSelect)</span><span style="color:var(--accent2)">$[14]</span>
+            <span style="color:var(--accent2);font-weight:500">userId</span><span style="color:var(--ink3)">dep of scope @10</span><span style="color:var(--accent2)">$[15]</span>
+            <span style="color:var(--accent2);font-weight:500">handleSelect</span><span style="color:var(--ink3)">declaration of scope @10</span><span style="color:var(--accent2)">$[16]</span>
+            <span style="color:var(--gold);font-weight:500">stats</span><span style="color:var(--ink3)">dep of scope @11 (&lt;StatsBar&gt; jsx)</span><span style="color:var(--gold)">$[17]</span>
+            <span style="color:var(--gold);font-weight:500">&lt;StatsBar&gt;</span><span style="color:var(--ink3)">declaration of scope @11</span><span style="color:var(--gold)">$[18]</span>
+            <span style="color:var(--accent3);font-weight:500">filteredOrders</span><span style="color:var(--ink3)">dep of scope @12 (&lt;OrderTable&gt;)</span><span style="color:var(--accent3)">$[19]</span>
+            <span style="color:var(--accent3);font-weight:500">handleSelect</span><span style="color:var(--ink3)">dep of scope @12</span><span style="color:var(--accent3)">$[20]</span>
+            <span style="color:var(--accent3);font-weight:500">&lt;OrderTable&gt;</span><span style="color:var(--ink3)">declaration of scope @12</span><span style="color:var(--accent3)">$[21]</span>
+            <span style="color:var(--accent3);font-weight:500">t6</span><span style="color:var(--ink3)">dep of scope @13 (&lt;div&gt;)</span><span style="color:var(--accent3)">$[22]</span>
+            <span style="color:var(--accent3);font-weight:500">t7</span><span style="color:var(--ink3)">dep of scope @13</span><span style="color:var(--accent3)">$[23]</span>
+            <span style="color:var(--accent3);font-weight:500">&lt;div&gt;</span><span style="color:var(--ink3)">declaration of scope @13</span><span style="color:var(--accent3)">$[24]</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: scope cards + _c(25) total -->
+      <div style="display:flex;flex-direction:column;gap:9px;min-height:0">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;flex-shrink:0">
+          <div class="scc" style="border-top:2px solid var(--accent)">
+            <div class="sl-h">scope @5 — 10 slots $[0..9]</div>
+            <div class="sl-n" style="color:var(--accent);font-size:12px">filteredOrders + values</div>
+            <div class="sl-d" style="color:var(--accent);font-size:10px">deps: orders, searchQuery, statusFilter</div>
+          </div>
+          <div class="scc" style="border-top:2px solid var(--accent4)">
+            <div class="sl-h">scope @9 — 4 slots $[10..13]</div>
+            <div class="sl-n" style="color:var(--accent4);font-size:12px">stats object</div>
+            <div class="sl-d" style="color:var(--accent4);font-size:10px">deps: len, revenue, avg</div>
+          </div>
+          <div class="scc" style="border-top:2px solid var(--accent2)">
+            <div class="sl-h">scope @10 — 3 slots $[14..16]</div>
+            <div class="sl-n" style="color:var(--accent2);font-size:12px">handleSelect</div>
+            <div class="sl-d" style="color:var(--accent2);font-size:10px">deps: userId, onOrderSelect</div>
+          </div>
+          <div class="scc" style="border-top:2px solid var(--gold)">
+            <div class="sl-h">scope @11 — 2 slots $[17..18]</div>
+            <div class="sl-n" style="color:var(--gold);font-size:12px">&lt;StatsBar&gt; jsx</div>
+            <div class="sl-d" style="color:var(--gold);font-size:10px">deps: stats</div>
+          </div>
+        </div>
+        <div class="scc" style="border-top:2px solid var(--accent3);flex-shrink:0">
+          <div class="sl-h">scope @12+13 — 6 slots $[19..24]</div>
+          <div class="sl-n" style="color:var(--accent3);font-size:12px">&lt;OrderTable&gt; + &lt;div&gt;</div>
+          <div class="sl-d" style="color:var(--accent3);font-size:10px">deps: filteredOrders, handleSelect</div>
+        </div>
+        <!-- _c(25) sum -->
+        <div style="background:var(--paper2);border:1px solid var(--rule);border-radius:8px;padding:12px 14px;flex-shrink:0">
+          <div style="font-family:'Syne',sans-serif;font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ink4);margin-bottom:8px">_c(25) — slot count</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink3);line-height:2">
+            <span style="color:var(--accent)">@5</span>: 3 deps + 7 values = 10&nbsp;&nbsp;
+            <span style="color:var(--accent4)">@9</span>: 3 deps + 1 value = 4&nbsp;&nbsp;
+            <span style="color:var(--accent2)">@10</span>: 2 deps + 1 value = 3<br>
+            <span style="color:var(--gold)">@11</span>: 1 dep + 1 value = 2&nbsp;&nbsp;
+            <span style="color:var(--accent3)">@12+13</span>: 4 deps + 2 values = 6<br>
+            <span style="font-size:12px;color:var(--ink)">10 + 4 + 3 + 2 + 6 = <strong style="color:var(--accent);font-size:13px">25</strong></span>
+          </div>
+        </div>
+        <div class="nc n-b" style="font-size:12px;flex-shrink:0"><span class="nt">Each slot = 1 array index in $</span>The compiler allocates one slot per dep (to detect changes) and one slot per cached result. All 25 indices are known at build time — the browser never needs to allocate anything dynamically.</div>
+      </div>
+
     </div>
   </div>
 </div>
 
-<!-- ══ 9 — CODEGEN ══ -->
 <div class="sl" id="s9">
   <div class="frame">
-    <div class="eyebrow">Stage 7 of 7</div>
+    <div class="eyebrow">Stage 7 of 7 · Output · Scope @5</div>
     <div class="pipe"><div class="ps">HIR</div><div class="pa">›</div><div class="ps">SSA</div><div class="pa">›</div><div class="ps">Types+Effects</div><div class="pa">›</div><div class="ps">Reactive</div><div class="pa">›</div><div class="ps">Scopes</div><div class="pa">›</div><div class="ps on">Output</div></div>
-    <div style="display:grid;grid-template-columns:1.15fr 0.85fr;gap:24px;flex:1;min-height:0">
+    <p class="lead" style="font-size:13px;margin-bottom:10px;flex-shrink:0">The compiler emits one <code>if/else</code> cache guard per scope. Here: scope @5 — <strong>filteredOrders + stats values</strong> — deps: <code>[orders, searchQuery, statusFilter]</code>. Slots $[0..9].</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;flex:1;min-height:0">
       <div class="cb">
-        <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">compiler output — actual output from playground, _c(25)</span></div>
+        <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">Source — what you wrote</span></div>
+        <div class="cbody" style="font-size:11.5px">
+<span class="ln"><span class="cm">// ❶ expensive — runs every render</span></span>
+<span class="ln HL"><span class="kw">const</span> filteredOrders = orders</span>
+<span class="ln HL">  .<span class="fn">filter</span>(o => o.status === statusFilter &&</span>
+<span class="ln HL">    o.description.<span class="fn">toLowerCase</span>().<span class="fn">includes</span>(searchQuery))</span>
+<span class="ln HL">  .<span class="fn">sort</span>((a,b) => <span class="kw">new</span> <span class="fn">Date</span>(b.createdAt) - <span class="kw">new</span> <span class="fn">Date</span>(a.createdAt));</span>
+<span class="ln"></span>
+<span class="ln"><span class="cm">// ❷ derived — recalculates every render</span></span>
+<span class="ln TL"><span class="kw">const</span> stats = {</span>
+<span class="ln TL">  total:    filteredOrders.length,</span>
+<span class="ln TL">  revenue:  filteredOrders.<span class="fn">reduce</span>((s,o) => s+o.amount, <span class="num">0</span>),</span>
+<span class="ln TL">  avgValue: filteredOrders.length > <span class="num">0</span></span>
+<span class="ln TL">    ? filteredOrders.<span class="fn">reduce</span>((s,o) => s+o.amount,<span class="num">0</span>) / filteredOrders.length</span>
+<span class="ln TL">    : <span class="num">0</span>,</span>
+<span class="ln TL">};</span>
+        </div>
+      </div>
+      <div class="cb">
+        <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">Output — scope @5 cache guard</span></div>
+        <div class="cbody" style="font-size:11px">
+<span class="ln"><span class="cm">// ONE check for the whole group</span></span>
+<span class="ln HL"><span class="kw">if</span> ($[<span class="num">0</span>] !== orders || $[<span class="num">1</span>] !== searchQuery || $[<span class="num">2</span>] !== statusFilter) {</span>
+<span class="ln HL">  <span class="cm">// inner scope @4: only re-create filter fn when needed</span></span>
+<span class="ln HL">  <span class="kw">let</span> t4;</span>
+<span class="ln HL">  <span class="kw">if</span> ($[<span class="num">7</span>] !== searchQuery || $[<span class="num">8</span>] !== statusFilter) {</span>
+<span class="ln HL">    t4 = o => o.status===statusFilter &&</span>
+<span class="ln HL">         o.description.<span class="fn">toLowerCase</span>().<span class="fn">includes</span>(searchQuery);</span>
+<span class="ln HL">    $[<span class="num">7</span>]=searchQuery; $[<span class="num">8</span>]=statusFilter; $[<span class="num">9</span>]=t4;</span>
+<span class="ln HL">  } <span class="kw">else</span> { t4=$[<span class="num">9</span>]; }</span>
+<span class="ln HL">  filteredOrders = orders.<span class="fn">filter</span>(t4).<span class="fn">sort</span>(_temp);</span>
+<span class="ln HL">  t1=filteredOrders.length;</span>
+<span class="ln HL">  t2=filteredOrders.<span class="fn">reduce</span>(_temp2,<span class="num">0</span>);</span>
+<span class="ln HL">  t3=filteredOrders.length&gt;<span class="num">0</span> ? filteredOrders.<span class="fn">reduce</span>(_temp3,<span class="num">0</span>)/filteredOrders.length : <span class="num">0</span>;</span>
+<span class="ln HL">  $[<span class="num">0</span>]=orders; $[<span class="num">1</span>]=searchQuery; $[<span class="num">2</span>]=statusFilter;</span>
+<span class="ln HL">  $[<span class="num">3</span>]=filteredOrders; $[<span class="num">4</span>]=t1; $[<span class="num">5</span>]=t2; $[<span class="num">6</span>]=t3;</span>
+<span class="ln HL">} <span class="kw">else</span> {</span>
+<span class="ln HL">  filteredOrders=$[<span class="num">3</span>]; t1=$[<span class="num">4</span>]; t2=$[<span class="num">5</span>]; t3=$[<span class="num">6</span>];</span>
+<span class="ln HL">}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 9b — CODEGEN: Scope @9 + @10 ══ -->
+<div class="sl" id="s9b">
+  <div class="frame">
+    <div class="eyebrow">Stage 7 of 7 · Output · Scopes @9 + @10</div>
+    <div class="pipe"><div class="ps">HIR</div><div class="pa">›</div><div class="ps">SSA</div><div class="pa">›</div><div class="ps">Types+Effects</div><div class="pa">›</div><div class="ps">Reactive</div><div class="pa">›</div><div class="ps">Scopes</div><div class="pa">›</div><div class="ps on">Output</div></div>
+    <p class="lead" style="font-size:13px;margin-bottom:10px;flex-shrink:0">Two fully independent guards. <strong style="color:var(--accent4)">@9</strong> depends on filter results. <strong style="color:var(--accent2)">@10</strong> depends on the callback props — they never trigger each other.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;flex:1;min-height:0">
+      <div class="cb">
+        <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">Source — what you wrote</span></div>
+        <div class="cbody" style="font-size:11.5px">
+<span class="ln"><span class="cm">// stats — derived from filteredOrders</span></span>
+<span class="ln TL"><span class="kw">const</span> stats = {</span>
+<span class="ln TL">  total:    filteredOrders.length,</span>
+<span class="ln TL">  revenue:  filteredOrders.<span class="fn">reduce</span>((s,o) => s+o.amount, <span class="num">0</span>),</span>
+<span class="ln TL">  avgValue: <span class="cm">/* ... */</span>,</span>
+<span class="ln TL">};</span>
+<span class="ln"></span>
+<span class="ln"><span class="cm">// ❸ callback — new ref every render</span></span>
+<span class="ln LL"><span class="kw">const</span> handleSelect = (orderId) => {</span>
+<span class="ln LL">  <span class="fn">logEvent</span>(<span class="str">'order_selected'</span>, { userId, orderId });</span>
+<span class="ln LL">  <span class="fn">onOrderSelect</span>(orderId);</span>
+<span class="ln LL">};</span>
+        </div>
+      </div>
+      <div class="cb">
+        <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">Output — scopes @9 and @10 guards</span></div>
+        <div class="cbody" style="font-size:11px">
+<span class="ln"><span class="cm">// scope @9 — only rebuilds when filter results change</span></span>
+<span class="ln TL"><span class="kw">if</span>($[<span class="num">10</span>]!==t1 || $[<span class="num">11</span>]!==t2 || $[<span class="num">12</span>]!==t3) {</span>
+<span class="ln TL">  t4 = { total:t1, revenue:t2, avgValue:t3 };</span>
+<span class="ln TL">  $[<span class="num">10</span>]=t1; $[<span class="num">11</span>]=t2; $[<span class="num">12</span>]=t3; $[<span class="num">13</span>]=t4;</span>
+<span class="ln TL">} <span class="kw">else</span> { t4=$[<span class="num">13</span>]; }</span>
+<span class="ln TL"><span class="kw">const</span> stats = t4;</span>
+<span class="ln"></span>
+<span class="ln"><span class="cm">// scope @10 — INDEPENDENT, only userId/onOrderSelect</span></span>
+<span class="ln LL"><span class="kw">if</span>($[<span class="num">14</span>]!==onOrderSelect || $[<span class="num">15</span>]!==userId) {</span>
+<span class="ln LL">  t5 = (orderId) => {</span>
+<span class="ln LL">    <span class="fn">logEvent</span>(<span class="str">'order_selected'</span>,{userId,orderId});</span>
+<span class="ln LL">    <span class="fn">onOrderSelect</span>(orderId);</span>
+<span class="ln LL">  };</span>
+<span class="ln LL">  $[<span class="num">14</span>]=onOrderSelect; $[<span class="num">15</span>]=userId; $[<span class="num">16</span>]=t5;</span>
+<span class="ln LL">} <span class="kw">else</span> { t5=$[<span class="num">16</span>]; }</span>
+<span class="ln LL"><span class="kw">const</span> handleSelect = t5;</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 9c — CODEGEN: JSX Scopes ══ -->
+<div class="sl" id="s9c">
+  <div class="frame">
+    <div class="eyebrow">Stage 7 of 7 · Output · Scopes @11 @12 @13</div>
+    <div class="pipe"><div class="ps">HIR</div><div class="pa">›</div><div class="ps">SSA</div><div class="pa">›</div><div class="ps">Types+Effects</div><div class="pa">›</div><div class="ps">Reactive</div><div class="pa">›</div><div class="ps">Scopes</div><div class="pa">›</div><div class="ps on">Output</div></div>
+    <p class="lead" style="font-size:13px;margin-bottom:10px;flex-shrink:0">JSX <em>element objects</em> are cached too — not just values. When React receives the same object reference, it skips reconciliation entirely. No diffing, no fiber walk.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;flex:1;min-height:0">
+      <div class="cb">
+        <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">Source — what you wrote</span></div>
+        <div class="cbody" style="font-size:11.5px">
+<span class="ln"><span class="kw">return</span> (</span>
+<span class="ln SL">  &lt;<span class="fn">div</span>&gt;</span>
+<span class="ln SL">    &lt;<span class="fn">StatsBar</span> stats={stats} /&gt;</span>
+<span class="ln SL">    &lt;<span class="fn">OrderTable</span></span>
+<span class="ln SL">      orders={filteredOrders}</span>
+<span class="ln SL">      onSelect={handleSelect}</span>
+<span class="ln SL">    /&gt;</span>
+<span class="ln SL">  &lt;/<span class="fn">div</span>&gt;</span>
+<span class="ln">);</span>
+        </div>
+      </div>
+      <div class="cb">
+        <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">Output — JSX element cache guards</span></div>
+        <div class="cbody" style="font-size:11px">
+<span class="ln"><span class="cm">// scope @11 — &lt;StatsBar&gt; only when stats changes</span></span>
+<span class="ln SL"><span class="kw">if</span>($[<span class="num">17</span>]!==stats) {</span>
+<span class="ln SL">  t6 = &lt;<span class="fn">StatsBar</span> stats={stats}/&gt;;</span>
+<span class="ln SL">  $[<span class="num">17</span>]=stats; $[<span class="num">18</span>]=t6;</span>
+<span class="ln SL">} <span class="kw">else</span> { t6=$[<span class="num">18</span>]; } <span class="cm">// same object ref ✓</span></span>
+<span class="ln"></span>
+<span class="ln"><span class="cm">// scope @12 — &lt;OrderTable&gt; only when its deps change</span></span>
+<span class="ln SL"><span class="kw">if</span>($[<span class="num">19</span>]!==filteredOrders || $[<span class="num">20</span>]!==handleSelect) {</span>
+<span class="ln SL">  t7 = &lt;<span class="fn">OrderTable</span> orders={filteredOrders} onSelect={handleSelect}/&gt;;</span>
+<span class="ln SL">  $[<span class="num">19</span>]=filteredOrders; $[<span class="num">20</span>]=handleSelect; $[<span class="num">21</span>]=t7;</span>
+<span class="ln SL">} <span class="kw">else</span> { t7=$[<span class="num">21</span>]; } <span class="cm">// same object ref ✓</span></span>
+<span class="ln"></span>
+<span class="ln"><span class="cm">// scope @13 — outer &lt;div&gt; only when children change</span></span>
+<span class="ln SL"><span class="kw">if</span>($[<span class="num">22</span>]!==t6 || $[<span class="num">23</span>]!==t7) {</span>
+<span class="ln SL">  t8 = &lt;<span class="fn">div</span>&gt;{t6}{t7}&lt;/<span class="fn">div</span>&gt;;</span>
+<span class="ln SL">  $[<span class="num">22</span>]=t6; $[<span class="num">23</span>]=t7; $[<span class="num">24</span>]=t8;</span>
+<span class="ln SL">} <span class="kw">else</span> { t8=$[<span class="num">24</span>]; } <span class="cm">// React bails out ✓</span></span>
+<span class="ln SL"><span class="kw">return</span> t8;</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 9d — CODEGEN: Full source vs full output ══ -->
+<div class="sl" id="s9d">
+  <div class="frame">
+    <div class="eyebrow">Stage 7 of 7 · Full Output</div>
+    <div class="pipe"><div class="ps">HIR</div><div class="pa">›</div><div class="ps">SSA</div><div class="pa">›</div><div class="ps">Types+Effects</div><div class="pa">›</div><div class="ps">Reactive</div><div class="pa">›</div><div class="ps">Scopes</div><div class="pa">›</div><div class="ps on">Output</div></div>
+    <p class="lead" style="font-size:13px;margin-bottom:10px;flex-shrink:0">Full before / after. The source is unchanged — the compiler emits a parallel optimised version. 5 independent guards. 25 slots. Zero manual memoization.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;flex:1;min-height:0">
+      <div class="cb">
+        <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">Source — Dashboard.tsx (unchanged)</span></div>
+        <div class="cbody" style="font-size:10.5px">
+<span class="ln"><span class="kw">function</span> <span class="fn">Dashboard</span>({ orders, searchQuery, statusFilter, onOrderSelect, userId }) {</span>
+<span class="ln"></span>
+<span class="ln HL">  <span class="kw">const</span> filteredOrders = orders</span>
+<span class="ln HL">    .<span class="fn">filter</span>(o => o.status === statusFilter &&</span>
+<span class="ln HL">      o.description.<span class="fn">toLowerCase</span>().<span class="fn">includes</span>(searchQuery))</span>
+<span class="ln HL">    .<span class="fn">sort</span>((a,b) => <span class="kw">new</span> <span class="fn">Date</span>(b.createdAt) - <span class="kw">new</span> <span class="fn">Date</span>(a.createdAt));</span>
+<span class="ln"></span>
+<span class="ln TL">  <span class="kw">const</span> stats = {</span>
+<span class="ln TL">    total:    filteredOrders.length,</span>
+<span class="ln TL">    revenue:  filteredOrders.<span class="fn">reduce</span>((s,o) => s+o.amount, <span class="num">0</span>),</span>
+<span class="ln TL">    avgValue: filteredOrders.length &gt; <span class="num">0</span></span>
+<span class="ln TL">      ? filteredOrders.<span class="fn">reduce</span>((s,o) => s+o.amount,<span class="num">0</span>) / filteredOrders.length : <span class="num">0</span>,</span>
+<span class="ln TL">  };</span>
+<span class="ln"></span>
+<span class="ln LL">  <span class="kw">const</span> handleSelect = (orderId) => {</span>
+<span class="ln LL">    <span class="fn">logEvent</span>(<span class="str">'order_selected'</span>, { userId, orderId });</span>
+<span class="ln LL">    <span class="fn">onOrderSelect</span>(orderId);</span>
+<span class="ln LL">  };</span>
+<span class="ln"></span>
+<span class="ln SL">  <span class="kw">return</span> (</span>
+<span class="ln SL">    &lt;<span class="fn">div</span>&gt;</span>
+<span class="ln SL">      &lt;<span class="fn">StatsBar</span> stats={stats} /&gt;</span>
+<span class="ln SL">      &lt;<span class="fn">OrderTable</span> orders={filteredOrders} onSelect={handleSelect} /&gt;</span>
+<span class="ln SL">    &lt;/<span class="fn">div</span>&gt;</span>
+<span class="ln SL">  );</span>
+<span class="ln">}</span>
+        </div>
+      </div>
+      <div class="cb">
+        <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">Output — compiler-generated, _c(25)</span></div>
         <div class="cbody" style="font-size:10.5px">
 <span class="ln"><span class="kw">import</span> { c <span class="kw">as</span> _c } <span class="kw">from</span> <span class="str">"react/compiler-runtime"</span>;</span>
 <span class="ln"><span class="kw">function</span> <span class="fn">Dashboard</span>(t0) {</span>
-<span class="ln">  <span class="kw">const</span> $ = <span class="fn">_c</span>(<span class="num">25</span>); <span class="cm">// flat array, size fixed at compile time</span></span>
+<span class="ln">  <span class="kw">const</span> $ = <span class="fn">_c</span>(<span class="num">25</span>);</span>
 <span class="ln">  <span class="kw">const</span> { orders, searchQuery, statusFilter, onOrderSelect, userId } = t0;</span>
-<span class="ln"></span>
-<span class="ln HL">  <span class="cm">// scope @5 — deps: [orders, searchQuery, statusFilter]</span></span>
-<span class="ln HL">  <span class="kw">if</span> ($[<span class="num">0</span>] !== orders || $[<span class="num">1</span>] !== searchQuery || $[<span class="num">2</span>] !== statusFilter) {</span>
-<span class="ln HL">    <span class="kw">let</span> t4; <span class="cm">// inner scope @4 — filter fn</span></span>
-<span class="ln HL">    <span class="kw">if</span> ($[<span class="num">7</span>] !== searchQuery || $[<span class="num">8</span>] !== statusFilter) {</span>
-<span class="ln HL">      t4 = o => o.status===statusFilter && o.description.<span class="fn">toLowerCase</span>().<span class="fn">includes</span>(searchQuery);</span>
-<span class="ln HL">      $[<span class="num">7</span>]=searchQuery; $[<span class="num">8</span>]=statusFilter; $[<span class="num">9</span>]=t4;</span>
-<span class="ln HL">    } <span class="kw">else</span> { t4=$[<span class="num">9</span>]; }</span>
-<span class="ln HL">    filteredOrders = orders.<span class="fn">filter</span>(t4).<span class="fn">sort</span>(_temp);</span>
+<span class="ln HL">  <span class="kw">if</span>($[<span class="num">0</span>]!==orders||$[<span class="num">1</span>]!==searchQuery||$[<span class="num">2</span>]!==statusFilter){</span>
+<span class="ln HL">    <span class="kw">let</span> t4; <span class="kw">if</span>($[<span class="num">7</span>]!==searchQuery||$[<span class="num">8</span>]!==statusFilter){</span>
+<span class="ln HL">      t4=o=>o.status===statusFilter&&o.description.<span class="fn">toLowerCase</span>().<span class="fn">includes</span>(searchQuery);</span>
+<span class="ln HL">      $[<span class="num">7</span>]=searchQuery;$[<span class="num">8</span>]=statusFilter;$[<span class="num">9</span>]=t4;}else{t4=$[<span class="num">9</span>];}</span>
+<span class="ln HL">    filteredOrders=orders.<span class="fn">filter</span>(t4).<span class="fn">sort</span>(_temp);</span>
 <span class="ln HL">    t1=filteredOrders.length; t2=filteredOrders.<span class="fn">reduce</span>(_temp2,<span class="num">0</span>);</span>
-<span class="ln HL">    t3 = filteredOrders.length > <span class="num">0</span></span>
-<span class="ln HL">      ? filteredOrders.<span class="fn">reduce</span>(_temp3, <span class="num">0</span>) / filteredOrders.length : <span class="num">0</span>;</span>
-<span class="ln HL">    $[<span class="num">0</span>]=orders; $[<span class="num">1</span>]=searchQuery; $[<span class="num">2</span>]=statusFilter;</span>
-<span class="ln HL">    $[<span class="num">3</span>]=filteredOrders; $[<span class="num">4</span>]=t1; $[<span class="num">5</span>]=t2; $[<span class="num">6</span>]=t3;</span>
-<span class="ln HL">  } <span class="kw">else</span> { filteredOrders=$[<span class="num">3</span>]; t1=$[<span class="num">4</span>]; t2=$[<span class="num">5</span>]; t3=$[<span class="num">6</span>]; }</span>
-<span class="ln"></span>
-<span class="ln TL">  <span class="cm">// scope @9 — deps: [t1, t2, t3]</span></span>
-<span class="ln TL">  <span class="kw">if</span>($[<span class="num">10</span>]!==t1||$[<span class="num">11</span>]!==t2||$[<span class="num">12</span>]!==t3){</span>
-<span class="ln TL">    t4={total:t1,revenue:t2,avgValue:t3}; $[<span class="num">10</span>]=t1;$[<span class="num">11</span>]=t2;$[<span class="num">12</span>]=t3;$[<span class="num">13</span>]=t4;</span>
-<span class="ln TL">  }<span class="kw">else</span>{t4=$[<span class="num">13</span>];} <span class="kw">const</span> stats=t4;</span>
-<span class="ln"></span>
-<span class="ln LL">  <span class="cm">// scope @10 — deps: [onOrderSelect, userId] — INDEPENDENT</span></span>
+<span class="ln HL">    t3=filteredOrders.length&gt;<span class="num">0</span>?filteredOrders.<span class="fn">reduce</span>(_temp3,<span class="num">0</span>)/filteredOrders.length:<span class="num">0</span>;</span>
+<span class="ln HL">    $[<span class="num">0</span>]=orders;$[<span class="num">1</span>]=searchQuery;$[<span class="num">2</span>]=statusFilter;$[<span class="num">3</span>]=filteredOrders;$[<span class="num">4</span>]=t1;$[<span class="num">5</span>]=t2;$[<span class="num">6</span>]=t3;</span>
+<span class="ln HL">  }<span class="kw">else</span>{filteredOrders=$[<span class="num">3</span>];t1=$[<span class="num">4</span>];t2=$[<span class="num">5</span>];t3=$[<span class="num">6</span>];}</span>
+<span class="ln TL">  <span class="kw">if</span>($[<span class="num">10</span>]!==t1||$[<span class="num">11</span>]!==t2||$[<span class="num">12</span>]!==t3){t4={total:t1,revenue:t2,avgValue:t3};</span>
+<span class="ln TL">    $[<span class="num">10</span>]=t1;$[<span class="num">11</span>]=t2;$[<span class="num">12</span>]=t3;$[<span class="num">13</span>]=t4;}<span class="kw">else</span>{t4=$[<span class="num">13</span>];} <span class="kw">const</span> stats=t4;</span>
 <span class="ln LL">  <span class="kw">if</span>($[<span class="num">14</span>]!==onOrderSelect||$[<span class="num">15</span>]!==userId){</span>
 <span class="ln LL">    t5=(orderId)=>{<span class="fn">logEvent</span>(<span class="str">'order_selected'</span>,{userId,orderId});<span class="fn">onOrderSelect</span>(orderId);};</span>
-<span class="ln LL">    $[<span class="num">14</span>]=onOrderSelect;$[<span class="num">15</span>]=userId;$[<span class="num">16</span>]=t5;</span>
-<span class="ln LL">  }<span class="kw">else</span>{t5=$[<span class="num">16</span>];} <span class="kw">const</span> handleSelect=t5;</span>
-<span class="ln"></span>
-<span class="ln SL">  <span class="cm">// scopes @11 @12 @13 — JSX elements cached as objects</span></span>
+<span class="ln LL">    $[<span class="num">14</span>]=onOrderSelect;$[<span class="num">15</span>]=userId;$[<span class="num">16</span>]=t5;}<span class="kw">else</span>{t5=$[<span class="num">16</span>];} <span class="kw">const</span> handleSelect=t5;</span>
 <span class="ln SL">  <span class="kw">if</span>($[<span class="num">17</span>]!==stats){t6=&lt;<span class="fn">StatsBar</span> stats={stats}/&gt;;$[<span class="num">17</span>]=stats;$[<span class="num">18</span>]=t6;}<span class="kw">else</span> t6=$[<span class="num">18</span>];</span>
 <span class="ln SL">  <span class="kw">if</span>($[<span class="num">19</span>]!==filteredOrders||$[<span class="num">20</span>]!==handleSelect)</span>
 <span class="ln SL">    {t7=&lt;<span class="fn">OrderTable</span> orders={filteredOrders} onSelect={handleSelect}/&gt;;$[<span class="num">19</span>]=filteredOrders;$[<span class="num">20</span>]=handleSelect;$[<span class="num">21</span>]=t7;}<span class="kw">else</span> t7=$[<span class="num">21</span>];</span>
@@ -741,18 +985,10 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--pape
 <span class="ln">}</span>
         </div>
       </div>
-      <div style="display:flex;flex-direction:column;gap:10px;justify-content:center" class="stg">
-        <div class="nc n-o" style="font-size:13px"><strong style="color:var(--accent)">Orange guard — scope @5</strong><br>deps: <code>orders, searchQuery, statusFilter</code>. Inner guard @4 for just the filter fn. Typing in search → this runs. Changing userId → skipped.</div>
-        <div class="nc n-p" style="font-size:13px"><strong style="color:var(--accent4)">Purple guard — scope @9</strong><br>deps: computed values from @5. Stats object only rebuilt when filter results change.</div>
-        <div class="nc n-g" style="font-size:13px"><strong style="color:var(--accent2)">Green guard — scope @10</strong><br>deps: <code>userId, onOrderSelect</code>. Completely independent — changing orders never recreates this function.</div>
-        <div class="nc n-b" style="font-size:13px"><strong style="color:var(--accent3)">Blue guards — JSX elements</strong><br>Entire element objects cached. React sees same ref → bails out. No diffing, no fiber walk.</div>
-        <div class="nc n-k" style="font-size:13px"><strong>_c() is not useMemo</strong><br>Flat array on the fiber. O(1) slot access. 25 slots known at compile time. Zero dynamic allocation.</div>
-      </div>
     </div>
   </div>
 </div>
 
-<!-- ══ 10 — WHEN IT WON'T WORK ══ -->
 <div class="sl" id="s10">
   <div class="frame" style="padding-bottom:28px">
     <div class="eyebrow">Limitations</div>
@@ -1286,7 +1522,8 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--pape
 
 <script>
 const S=[...document.querySelectorAll('.sl')];
-const N=S.length;let c=0;
+const N=S.length;
+let c=0;
 const prog=document.getElementById('prog');
 const ctr=document.getElementById('ctr');
 const nav=document.getElementById('nav');
