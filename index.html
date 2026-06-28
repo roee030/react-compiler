@@ -89,7 +89,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--pape
   line-height: 1.12;
 }
 .h2 em { font-style: italic; }
-.lead { font-size: 17.5px; line-height: 1.5; color: var(--ink3); max-width: 580px; }
+.lead { font-size: 19px; line-height: 1.5; color: var(--ink3); max-width: 580px; }
 .lead strong { color: var(--ink); font-weight: 500; }
 .lead code { font-family:'JetBrains Mono',monospace; font-size:15px; color:var(--accent); background:rgba(194,65,12,.07); padding:1px 5px; border-radius:2px; }
 .mono { font-family: 'JetBrains Mono', monospace; }
@@ -106,7 +106,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--pape
 .cbody {
   padding: 10px 14px 10px 48px;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 16px; line-height: 1.25;
+  font-size: 17.5px; line-height: 1.15;
   white-space: pre; overflow-y: auto; overflow-x: hidden;
   counter-reset: line; flex: 1; min-height: 0;
   color: var(--cd-text);
@@ -675,7 +675,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--pape
 <div class="sl" id="s2">
   <div class="frame" style="padding:30px 38px">
     <div class="eyebrow">Full pipeline</div>
-    <div class="h2" style="margin-bottom:4px;font-size:28px">All ~45 passes — <em>7 stages</em> we cover</div>
+    <div class="h2" style="margin-bottom:4px">All ~45 passes — <em>7 stages</em> we cover</div>
     <p class="lead" style="font-size:14.5px;margin-bottom:10px;line-height:1.4;flex-shrink:0">Dozens of internal passes. <strong style="color:var(--accent)">Orange = covered today.</strong> Hover any pass for a 1-line explanation.</p>
     <div class="passes-grid">
       <div class="pg-section">
@@ -850,7 +850,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--pape
       <div style="display:flex;flex-direction:column;gap:10px;min-height:0">
         <div class="cb" style="flex:1;min-height:0">
           <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">Before SSA — ambiguous</span></div>
-          <div class="cbody" style="font-size:16.5px">
+          <div class="cbody">
 <span class="ln"><span class="cm">// same name, two assignments</span></span>
 <span class="ln"><span class="kw">let</span> filteredOrders;</span>
 <span class="ln"><span class="kw">if</span> (cache_miss) {</span>
@@ -864,7 +864,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--pape
         </div>
         <div class="cb" style="flex:1;min-height:0">
           <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">After SSA — unique subscripts</span></div>
-          <div class="cbody" style="font-size:16.5px">
+          <div class="cbody">
 <span class="ln"><span class="cm">// unique subscript per assignment</span></span>
 <span class="ln"><span class="kw">let</span> filteredOrders;</span>
 <span class="ln"><span class="kw">if</span> (cache_miss) {</span>
@@ -881,9 +881,9 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--pape
         <div class="h2" style="font-size:26px;line-height:1.1">Static Single<br><em>Assignment</em></div>
         <p class="lead" style="font-size:15px;line-height:1.4">Every variable name is assigned exactly once. Branches get unique subscripts. Phi nodes merge at join points.</p>
         <div class="hr"></div>
-        <div class="nc n-g" style="font-size:14px"><span class="nt">SSA rule</span>Each branch gets its own subscript: <code>$159</code> vs <code>$223</code>. A Phi node (φ) at the merge point makes both sources traceable — every use points to exactly one definition.</div>
-        <div class="nc n-o" style="font-size:14px"><span class="nt">What's still missing</span>We have identities. But what type is each value? Can it be mutated? Does it escape scope?</div>
-        <div class="nc n-b" style="font-size:14px"><span class="nt">Answer</span>Type inference + effect analysis — next stage.</div>
+        <div class="nc n-g"><span class="nt">SSA rule</span>Each branch gets its own subscript: <code>$159</code> vs <code>$223</code>. A Phi node (φ) at the merge point makes both sources traceable — every use points to exactly one definition.</div>
+        <div class="nc n-o"><span class="nt">What's still missing</span>We have identities. But what type is each value? Can it be mutated? Does it escape scope?</div>
+        <div class="nc n-b"><span class="nt">Answer</span>Type inference + effect analysis — next stage.</div>
         <div class="sl-video-sq"><video src="SSA.mp4" autoplay muted loop playsinline></video></div>
       </div>
     </div>
@@ -897,7 +897,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--pape
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;flex:1;min-height:0">
       <div class="cb">
         <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">InferMutationAliasingEffects — playground output</span></div>
-        <div class="cbody" style="font-size:15.5px">
+        <div class="cbody">
 <span class="ln"><span class="cm">// props → all FROZEN (immutable from React)</span></span>
 <span class="ln"><span class="ty">orders$116</span>:<span class="ty">TObject</span>         <span class="fn">Create+Frozen</span></span>
 <span class="ln"><span class="ty">searchQuery$118</span>             <span class="fn">Create+Frozen</span></span>
@@ -927,7 +927,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--pape
         <div class="h2" style="font-size:25px;line-height:1.15">Type Inference<br>+ <em>Effect Analysis</em></div>
         <p class="lead" style="font-size:14.5px;line-height:1.4">Classify each value's <strong>type</strong>. Annotate every instruction with what happens to that value — its <strong>effect</strong>. Together they decide what's safe to cache.</p>
         <div class="hr" style="margin:6px 0"></div>
-        <div class="nc n-b" style="font-size:13.5px"><span class="nt">Types you'll see</span><code>TObject</code> (plain obj), <code>TFunction</code>, <code>TPrimitive</code> (number/string), <code>TObject&lt;BuiltInJsx&gt;</code> (React element), <code>TObject&lt;BuiltInProps&gt;</code> (props from React).</div>
+        <div class="nc n-b"><span class="nt">Types you'll see</span><code>TObject</code> (plain obj), <code>TFunction</code>, <code>TPrimitive</code> (number/string), <code>TObject&lt;BuiltInJsx&gt;</code> (React element), <code>TObject&lt;BuiltInProps&gt;</code> (props from React).</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
           <div class="ef-card" style="border-left-color:var(--accent2)">
             <div class="ef-name">Create</div>
@@ -960,7 +960,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--pape
             <div class="ef-desc"><strong>Passed to React.</strong></div>
           </div>
         </div>
-        <div class="nc n-g" style="font-size:13.5px"><span class="nt">Freeze = the key insight</span>The moment a value is passed to JSX, the compiler knows nothing can change it ever again. <strong>That's when caching becomes safe.</strong></div>
+        <div class="nc n-g"><span class="nt">Freeze = the key insight</span>The moment a value is passed to JSX, the compiler knows nothing can change it ever again. <strong>That's when caching becomes safe.</strong></div>
       </div>
     </div>
   </div>
@@ -973,7 +973,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--pape
     <div style="display:grid;grid-template-columns:1.15fr 0.85fr;gap:24px;flex:1;min-height:0">
       <div class="cb">
         <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">InferReactivePlaces — {reactive} marks, from playground</span></div>
-        <div class="cbody" style="font-size:16px">
+        <div class="cbody">
 <span class="ln"><span class="cm">// props → always reactive (come from React)</span></span>
 <span class="ln"><span class="ty">orders$116{reactive}</span>        <span class="cm">// from props</span></span>
 <span class="ln"><span class="ty">searchQuery$118{reactive}</span>   <span class="cm">// from props</span></span>
@@ -1054,7 +1054,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--pape
     </div>
     <div style="background:var(--paper2);border:1px solid var(--rule);border-radius:7px;padding:11px 16px;margin-top:10px;flex-shrink:0;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap">
       <span style="font-family:'JetBrains Mono',monospace;font-size:17px;color:var(--accent);font-weight:600;white-space:nowrap">const $ = _c(25)</span>
-      <span style="font-family:'JetBrains Mono',monospace;font-size:14.5px;color:var(--ink3)"><span style="color:var(--accent)">10</span> + <span style="color:var(--accent4)">4</span> + <span style="color:var(--accent2)">3</span> + <span style="color:var(--gold)">2</span> + <span style="color:var(--accent3)">6</span> = <strong style="color:var(--ink);font-size:16px">25</strong> cache slots, all computed at build time</span>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:14.5px;color:var(--ink3)"><span style="color:var(--accent)">10</span> + <span style="color:var(--accent4)">4</span> + <span style="color:var(--accent2)">3</span> + <span style="color:var(--gold)">2</span> + <span style="color:var(--accent3)">6</span> = <strong style="color:var(--ink)">25</strong> cache slots, all computed at build time</span>
     </div>
   </div>
 </div>
@@ -1066,7 +1066,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--pape
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;flex:1;min-height:0">
       <div class="cb">
         <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">Source — what you wrote</span></div>
-        <div class="cbody" style="font-size:14.5px">
+        <div class="cbody">
 <span class="ln"><span class="kw">function</span> <span class="fn">Dashboard</span>({</span>
 <span class="ln">  orders,</span>
 <span class="ln">  searchQuery,</span>
@@ -1111,7 +1111,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--pape
       </div>
       <div class="cb">
         <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">Output — compiler-generated, 25 slots</span></div>
-        <div class="cbody" style="font-size:12.5px">
+        <div class="cbody">
 <span class="ln"><span class="kw">import</span> { c <span class="kw">as</span> _c } <span class="kw">from</span> <span class="str">"react/compiler-runtime"</span>;</span>
 <span class="ln"></span>
 <span class="ln"><span class="kw">function</span> <span class="fn">Dashboard</span>(t0) {</span>
@@ -1187,8 +1187,8 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--pape
   </div>
 </div>
 
-<div class="sl" id="s9e">
-  <div class="frame">
+<div class="sl" id="s9e" style="overflow:hidden">
+  <div class="frame" style="padding:20px 36px 14px;overflow:hidden">
     <div class="eyebrow">Live Demo · Dramatic comparison</div>
     <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:6px;flex-shrink:0;flex-wrap:wrap">
       <div class="h2" style="font-size:25px">See it <em>live</em> — same Dashboard, 5000 orders</div>
@@ -1738,13 +1738,13 @@ window.addEventListener(&#x27;message&#x27;, (e) =&gt; {
 <div class="sl" id="s10">
   <div class="frame">
     <div class="eyebrow">Limitations</div>
-    <div class="h2" style="margin-bottom:4px;font-size:28px">When the compiler <em>skips</em></div>
+    <div class="h2" style="margin-bottom:4px">When the compiler <em>skips</em></div>
     <p class="lead" style="font-size:14.5px;line-height:1.4;margin-bottom:12px;flex-shrink:0">Skips gracefully — original code unchanged, no errors — when it can't guarantee safety.</p>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:11px;flex:1;min-height:0;overflow:hidden">
 
       <div class="cb" style="min-height:0">
         <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">❌ Conditional hooks</span></div>
-        <div class="cbody" style="font-size:13.5px">
+        <div class="cbody">
 <span class="ln"><span class="kw">function</span> <span class="fn">MyComponent</span>({ shouldFetch }) {</span>
 <span class="ln HL">  <span class="kw">if</span> (shouldFetch) {</span>
 <span class="ln HL">    <span class="kw">const</span> data = <span class="fn">useQuery</span>(<span class="str">"/api/data"</span>);</span>
@@ -1755,7 +1755,7 @@ window.addEventListener(&#x27;message&#x27;, (e) =&gt; {
 
       <div class="cb" style="min-height:0">
         <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">❌ Hooks in loops</span></div>
-        <div class="cbody" style="font-size:13.5px">
+        <div class="cbody">
 <span class="ln"><span class="kw">function</span> <span class="fn">TodoList</span>({ items }) {</span>
 <span class="ln">  <span class="kw">return</span> items.<span class="fn">map</span>(item =&gt; {</span>
 <span class="ln HL">    <span class="kw">const</span> [done] = <span class="fn">useState</span>(<span class="kw">false</span>);</span>
@@ -1768,7 +1768,7 @@ window.addEventListener(&#x27;message&#x27;, (e) =&gt; {
 
       <div class="cb" style="min-height:0">
         <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">❌ Class components</span></div>
-        <div class="cbody" style="font-size:13.5px">
+        <div class="cbody">
 <span class="ln"><span class="cm">// class components not supported</span></span>
 <span class="ln"><span class="kw">class</span> <span class="ty">MyComponent</span> <span class="kw">extends</span></span>
 <span class="ln">  <span class="ty">React.Component</span> {</span>
@@ -1781,7 +1781,7 @@ window.addEventListener(&#x27;message&#x27;, (e) =&gt; {
 
       <div class="cb" style="min-height:0">
         <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">❌ Global state mutations</span></div>
-        <div class="cbody" style="font-size:13.5px">
+        <div class="cbody">
 <span class="ln"><span class="kw">let</span> globalCounter = <span class="num">0</span>;</span>
 <span class="ln"><span class="kw">function</span> <span class="fn">Counter</span>() {</span>
 <span class="ln HL">  globalCounter++;</span>
@@ -1793,7 +1793,7 @@ window.addEventListener(&#x27;message&#x27;, (e) =&gt; {
 
       <div class="cb" style="min-height:0">
         <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">❌ Direct DOM manipulation</span></div>
-        <div class="cbody" style="font-size:13.5px">
+        <div class="cbody">
 <span class="ln"><span class="kw">function</span> <span class="fn">MyComponent</span>() {</span>
 <span class="ln HL">  document.title = <span class="str">'New Title'</span>;</span>
 <span class="ln HL">  <span class="cm">// side effect in render</span></span>
@@ -1804,7 +1804,7 @@ window.addEventListener(&#x27;message&#x27;, (e) =&gt; {
 
       <div class="cb" style="min-height:0">
         <div class="cbar"><span class="dot dr"></span><span class="dot dy"></span><span class="dot dg"></span><span class="cname">✅ Already perfectly memoized</span></div>
-        <div class="cbody" style="font-size:13.5px">
+        <div class="cbody">
 <span class="ln"><span class="cm">// compiler rebuilds it more precisely</span></span>
 <span class="ln"><span class="kw">const</span> filteredData = <span class="fn">useMemo</span>(</span>
 <span class="ln TL">  () =&gt; data.<span class="fn">filter</span>(</span>
@@ -1815,7 +1815,7 @@ window.addEventListener(&#x27;message&#x27;, (e) =&gt; {
       </div>
 
     </div>
-    <div class="nc n-g" style="font-size:13.5px;margin-top:10px;flex-shrink:0"><span class="nt">Safe fallback + opt out</span>When skipped, original code is emitted unchanged. Use <code>'use no memo'</code> at the top of a function to explicitly opt out.</div>
+    <div class="nc n-g"><span class="nt">Safe fallback + opt out</span>When skipped, original code is emitted unchanged. Use <code>'use no memo'</code> at the top of a function to explicitly opt out.</div>
   </div>
 </div>
 
@@ -2246,3 +2246,4 @@ upd();
 </script>
 </body>
 </html>
+
